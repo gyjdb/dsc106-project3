@@ -29,7 +29,12 @@ function check(name, ok, detail = "") {
   const gate = await page.evaluate(() => ({ open: !document.getElementById("guess").hidden, bodyHidden: document.getElementById("place-body").hidden, q: document.getElementById("guess-q").textContent }));
   check("the panel asks for a guess before showing the answer", gate.open && gate.bodyHidden && /San Diego/.test(gate.q) && (await page.locator("#guess-reveal").isDisabled()), gate.q);
   await page.locator("#guess-year").focus();
-  for (let i = 0; i < 25; i++) await page.keyboard.press("ArrowRight"); // 2045 to 2070
+  await page.keyboard.press("ArrowRight"); // a real key press: 2000 to 2001
+  const afterKey = await page.locator("#guess-out").innerText();
+  await page.locator("#guess-year").evaluate((el) => {
+    el.value = "2070";
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
   await page.locator("#guess-birth").fill("1999");
   const shown = await page.locator("#guess-out").innerText();
   await page.locator("#guess-reveal").click();
@@ -37,7 +42,7 @@ function check(name, ok, detail = "") {
   const sdAnswer = await page.evaluate(() => window.viz.data.placeArrival(1, 1, window.viz.state.place.cell).median);
   const verdict = await page.locator("#guess-result").innerText();
   const afterGuess = await page.evaluate(() => ({ gateHidden: document.getElementById("guess").hidden, hero: document.getElementById("hero-year").textContent, marker: document.querySelector("#strip-svg .guess-label").textContent, lines: document.querySelectorAll("#line-svg path.s-line").length }));
-  check("revealing compares the guess with the models", shown === "2070" && verdict.includes("You guessed 2070.") && verdict.includes(`${2070 - sdAnswer} years sooner`), verdict);
+  check("revealing compares the guess with the models", afterKey === "2001" && shown === "2070" && verdict.includes("You guessed 2070.") && verdict.includes(`${2070 - sdAnswer} years sooner`), verdict);
   const lifeAfterGuess = await page.locator("#lifetime-text").innerText();
   const heroAfterGuess = await page.locator("#hero-text").innerText();
   const ends = await page.evaluate(() => [0, 3].map((sc) => window.viz.data.placeArrival(sc, 1, window.viz.state.place.cell).median));

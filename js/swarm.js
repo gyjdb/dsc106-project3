@@ -188,7 +188,7 @@ export class CitySwarm {
     // Grid and axis
     this.gGrid.selectAll("*").remove();
     TICKS.forEach((t) => {
-      if (this.narrow && t % 20 !== 10) return;
+      if (this.narrow && (t % 20 !== 10 || t === 2090)) return;
       this.gGrid.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", m.top).attr("y2", bottom).attr("stroke", "#e1e0d9");
       this.gGrid.append("text").attr("x", x(t)).attr("y", bottom + 15).attr("text-anchor", "middle").text(t);
     });
