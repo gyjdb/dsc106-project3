@@ -92,16 +92,16 @@ Ethan worked on most of the website and data processing. This included downloadi
 
 He also worked on the guessing game, guided tour, birth year feature, and city comparison chart.
 
-Matthew added and changed several features to make the website more user friendly. He added the line in the location panel that shows the range of years across the models, a note that years after 2070 are less certain, and a link from the website to this write-up. After testing the site, he found parts that were confusing or hard to use and made changes using Claude:
+Matthew tested the website and made several changes to make it easier to use. He added a line to the location panel showing the range of years projected by the climate models, along with a note that projections after 2070 are less certain. He also added a link from the website to this write-up.
 
-- When you picked a city from the search bar, buttons, table, or city chart, it was hard to find on the map. Now rings pulse out from the city so it is easy to spot.
-- There was no easy way to go back to the starting view, so he added a Reset view button above the map. It also brings back the guessing game.
-- The timeline did not look like something you could drag, so it now has a slider bar and knob.
-- The charts in the location panel now move with the timeline, and clicking on any chart jumps the map to that year.
-- The city search used to show a long list of every city. He replaced it with a dropdown that shows a few matches and also lets you search by country.
-- He changed the guided tour so each step asks a question, and shortened the text on the page so there is less to read.
+- Rings now pulse around the selected city, making it easier to spot on the map whether users select it from the search bar, buttons, city table, or city comparison chart.
+- A **Reset view** button above the map returns users to the starting view and brings back the guessing game.
+- The timeline now has a slider track and handle so users can see where to drag it.
+- The location panel charts update as users move the timeline. Clicking a year on any of those charts moves the map to that year.
+- The city search now shows a short list of matching results and lets users search by country.
+- Each step of the guided tour now starts with a question, and Matthew shortened the text throughout the site.
 
-Claude was used throughout development to help with coding and other parts of the project. However, the results were checked and corrected when needed.
+We used AI tools to assist with coding and other development tasks. We reviewed the output and corrected it where needed.
 
 As a team, we worked together on the checkpoint video. Mayur and Matthew also tested the website and gave feedback on the design, wording, and overall user experience. We worked together on the final write-up.
 
