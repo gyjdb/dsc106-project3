@@ -3,6 +3,8 @@
 DSC 106 Project 3: an interactive D3 map of when each place on Earth reaches a warming
 level and stays there, built from CMIP6 climate model simulations.
 
+Live page: https://gyjdb.github.io/dsc106-project3/
+
 ## Status
 
 Final version for the 11/13 submission, by The Avengineers: Ethan Cai, Mayur Nookala and

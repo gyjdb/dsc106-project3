@@ -258,7 +258,7 @@ async function init() {
     const scen = SCENARIOS[state.scenario];
     titleLevel.textContent = lv;
     document.title = `When Does ${lv} Arrive?`;
-    subtitle.textContent = `Color shows the year a place’s 20-year average temperature reaches ${lv} above its 1850–1900 level and stays there: the median of ${data.nModel} CMIP6 climate models under ${scen.code}, the “${scen.label.toLowerCase()}” emissions scenario.`;
+    subtitle.textContent = `Color shows the year a place’s 20-year average temperature reaches ${lv} above its 1850–1900 level and stays there: the median of ${data.nModel} CMIP6 climate models under ${scen.code}, the “${scen.label.toLowerCase()}” emissions scenario. This is warming at each place, not the world average: land warms faster than the oceans, so most places on land get there before the world as a whole.`;
     map.setField(data.medianArrival(state.scenario, state.level));
     timeline.update({
       curves: data.areaCurves(state.scenario, state.level),
@@ -273,7 +273,7 @@ async function init() {
     else if (never > N_CITIES / 2) citiesTitle.textContent = `${never} of the ${N_CITIES} largest cities do not reach ${lv} by ${data.lastYear}`;
     else if (high !== null && tropics !== null && tropics - high >= 3) citiesTitle.textContent = `High-latitude cities reach ${lv} about ${tropics - high} years before tropical cities`;
     else citiesTitle.textContent = `When ${lv} arrives in the world’s ${N_CITIES} largest cities`;
-    citiesNote.textContent = `The world’s ${N_CITIES} largest cities. Each dot is a city, sized by population and placed at the year its grid cell arrives: the median of ${data.nModel} models under ${scen.code}. Cities in the same grid cell share a year. Hover a dot to find it on the map, or click to select it.`;
+    citiesNote.textContent = `The world’s ${N_CITIES} largest cities. Each dot is a city, sized by population and placed at the year its grid cell arrives: the median of ${data.nModel} models under ${scen.code}. Cities in the same grid cell share a year. These are absolute degrees: tropical climates vary less from year to year, so a smaller warming stands out there sooner. Hover a dot to find it on the map, or click to select it.`;
     renderReading();
     renderPlace();
     renderTable();
@@ -491,6 +491,7 @@ async function init() {
   map.setPlace(home.place);
   storyButtons.attr("aria-pressed", (d) => (d === home ? "true" : "false"));
   renderField();
+  guessBox.hidden = false; // the opening question appears once there is data behind it
 
   /* Guided tour */
   const arctic = stories.find((s) => s.name === "Svalbard");

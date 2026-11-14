@@ -69,7 +69,7 @@
         <div class="place-name" id="place-name"></div>
         <div class="place-sub" id="place-sub"></div>
       </div>
-      <div class="guess" id="guess">
+      <div class="guess" id="guess" hidden>
         <p class="guess-q" id="guess-q"></p>
         <div class="guess-slider">
           <input id="guess-year" type="range" min="2000" max="2091" step="1" value="2000" aria-label="Your guess for the arrival year">
@@ -89,7 +89,10 @@
       </div>
       <div id="place-body" hidden>
         <div class="hero">
-          <div class="hero-year" id="hero-year"></div>
+          <div class="hero-num">
+            <div class="hero-around" id="hero-around">around</div>
+            <div class="hero-year" id="hero-year"></div>
+          </div>
           <div class="hero-text" id="hero-text"></div>
         </div>
         <p class="guess-result" id="guess-result" aria-live="polite" hidden></p>
@@ -99,7 +102,7 @@
           <span class="lifetime-text" id="lifetime-text" aria-live="polite"></span>
         </div>
         <div class="chart-title" id="line-title">Warming at this place</div>
-        <p class="chart-note">Against this place’s 1850–1900 average. Lines: model median, smoothed over 20 years. Band: middle 80% of models. Dot: median arrival.</p>
+        <p class="chart-note" id="line-note"></p>
         <div class="chart-wrap" id="line-wrap"><svg id="line-svg" role="img" aria-label="Line chart of warming over time at the selected place for each emissions scenario."></svg></div>
         <div class="chart-title" id="strip-title">When each climate model says it arrives</div>
         <p class="chart-note" id="strip-note"></p>
@@ -146,11 +149,16 @@
         <h3>Reading it carefully</h3>
         <p>The map shows the median of the models’ arrival years, one block per grid cell. A city’s value describes its whole cell, up to about 280 km across, not the city itself. Years up to today are model estimates, not observations. “Not by 2090” means the level was not reached and held: the last 20-year period is 2080–2099, and a place can touch a level without staying there. Because the rule looks ahead, arrival years can differ between scenarios from the 1980s on, even though the scenarios share history through 2014.</p>
       </div>
+      <div>
+        <h3>What a year here does not mean</h3>
+        <p>An arrival year is not a forecast for one year. It is the middle of a 20-year average, so single hot years reach the level sooner, and the models disagree by decades for most places. That spread describes these <span class="n-models"></span> models; it is not a probability. A late date is not safety either: this page tracks one measure, average temperature, in absolute degrees. Measured against a place’s normal year-to-year swings, the tropics leave their familiar climate first (Mahlstein et al., 2011).</p>
+      </div>
     </div>
+    <p class="refs"><strong>References.</strong> IPCC (2021), <em>Climate Change 2021: The Physical Science Basis</em>, Summary for Policymakers, <a href="https://doi.org/10.1017/9781009157896.001">doi:10.1017/9781009157896.001</a>, for 20-year averages against 1850–1900. Hausfather et al. (2022), “Climate simulations: recognize the ‘hot model’ problem”, <em>Nature</em>, <a href="https://doi.org/10.1038/d41586-022-01192-2">doi:10.1038/d41586-022-01192-2</a>. Hawkins and Sutton (2012), “Time of emergence of climate signals”, <em>Geophysical Research Letters</em>, <a href="https://doi.org/10.1029/2011GL050087">doi:10.1029/2011GL050087</a>. Hawkins et al. (2014), “Uncertainties in the timing of unprecedented climates”, <em>Nature</em>, <a href="https://doi.org/10.1038/nature13523">doi:10.1038/nature13523</a>, on why a single year needs its range. Mahlstein et al. (2011), “Early onset of significant local warming in low latitude countries”, <em>Environmental Research Letters</em>, <a href="https://doi.org/10.1088/1748-9326/6/3/034009">doi:10.1088/1748-9326/6/3/034009</a>.</p>
   </section>
 
   <footer class="credits">
-    <p>Made by The Avengineers (Ethan Cai, Mayur Nookala and Matthew Ramos) for DSC 106 at UC San Diego, Fall 2026. Climate data: CMIP6 on Google Cloud. Coastlines and cities: Natural Earth. Drawn with D3.</p>
+    <p>Made by The Avengineers (Ethan Cai, Mayur Nookala and Matthew Ramos) for DSC 106 at UC San Diego, Fall 2026. Climate data: CMIP6 on Google Cloud. Coastlines and cities: Natural Earth. Drawn with D3. <a href="https://github.com/gyjdb/dsc106-project3">Source code on GitHub</a>.</p>
   </footer>
 
   <div id="tooltip" class="tooltip" hidden></div>

@@ -22,6 +22,9 @@ export class PlacePanel {
     this.nameEl = document.getElementById("place-name");
     this.subEl = document.getElementById("place-sub");
     this.heroYear = document.getElementById("hero-year");
+    this.heroAround = document.getElementById("hero-around");
+    // The band holds the 10th to 90th percentile of the models: say that as a count.
+    document.getElementById("line-note").textContent = `Against this place’s 1850–1900 average. Lines: model median, smoothed over 20 years. Band: where about ${Math.round(data.nModel * 0.8)} of the ${data.nModel} models fall. Dot: median arrival.`;
     this.heroText = document.getElementById("hero-text");
     this.lifetimeText = document.getElementById("lifetime-text");
     this.lineWrap = document.getElementById("line-wrap");
@@ -90,6 +93,7 @@ export class PlacePanel {
     this.nameEl.textContent = place.name;
     this.subEl.textContent = place.sub;
     this.heroYear.classList.toggle("long", a.median === null);
+    this.heroAround.hidden = a.median === null; // a median across models, so "around"; never a forecast for one year
     const before = Number(this.heroYear.textContent);
     if (this.motion && a.median !== null && Number.isInteger(before) && before !== a.median) {
       const step = d3.interpolateRound(before, a.median);
@@ -108,7 +112,7 @@ export class PlacePanel {
     const world = data.worldArrival(scenario, level);
     const parts = [];
     if (a.median !== null) {
-      parts.push(["is when this place reaches ", false], [fmtLevel(lv), true], [` and stays there, under ${scen.code}. `, false]);
+      parts.push(["is when this place’s 20-year average reaches ", false], [fmtLevel(lv), true], [` and stays there, under ${scen.code}: the median of ${a.nModel} models. `, false]);
       if (a.nReached > 0) {
         parts.push(
           a.earliest === a.latest
