@@ -248,7 +248,33 @@ function check(name, ok, detail = "") {
     check("land share matches the Python analysis", Math.abs(sh.land_by_2050 - js.__shares.land) < 0.002 && Math.abs(sh.ocean_by_2050 - js.__shares.ocean) < 0.002, `${sh.land_by_2050} vs ${js.__shares.land.toFixed(3)}`);
   }
 
-  // 12. Guided tour: every step sets the state it describes.
+  // 12. Lifetime: a birth year turns arrival years into ages.
+  await page.locator("#story-list button").first().click();
+  const sd = await page.evaluate(() => window.viz.data.placeArrival(1, 1, window.viz.data.cellOf(32.72, -117.15)).median);
+  const life1 = await page.locator("#lifetime-text").innerText();
+  check("default birth year gives an age", life1.includes(`You would be ${sd - 2005}.`) && life1.includes(`A child born today would be ${sd - 2026}.`), life1);
+  await page.locator("#birth-year").fill("1990");
+  const life2 = await page.locator("#lifetime-text").innerText();
+  const ages = await page.evaluate(() => [...document.querySelectorAll("#line-svg .age-axis text")].map((t) => t.textContent));
+  check("changing the birth year updates the age", life2.includes(`You would be ${sd - 1990}.`), life2);
+  check("the chart shows an age row", ages.join(",") === "age 10,30,50,70,90", ages.join(","));
+  await page.locator("#story-list button").nth(3).click();
+  const sv = await page.evaluate(() => window.viz.data.placeArrival(1, 1, window.viz.state.place.cell).median);
+  const life3 = await page.locator("#lifetime-text").innerText();
+  check("an arrival in the past uses the past tense", life3.includes(`You were ${sv - 1990} when it arrived.`) && life3.includes("it was already here"), life3);
+  await page.locator("#birth-year").fill("2005");
+  const life4 = await page.locator("#lifetime-text").innerText();
+  check("an arrival before birth says so", life4.includes(`${2005 - sv} years before you were born`), life4);
+  await page.locator("#story-list button").nth(4).click();
+  const life5 = await page.locator("#lifetime-text").innerText();
+  check("a place that never arrives gives the age in 2090", life5.includes("By 2090 you would be 85"), life5);
+  await page.locator("#birth-year").fill("");
+  const life6 = await page.locator("#lifetime-text").innerText();
+  const noAges = await page.evaluate(() => document.querySelectorAll("#line-svg .age-axis text").length);
+  check("an empty birth year turns the ages off", /Enter your birth year/.test(life6) && noAges === 0, life6);
+  await page.locator("#birth-year").fill("2005");
+
+  // 13. Guided tour: every step sets the state it describes.
   await page.locator("#tour-start").click();
   const tourOpen = await page.locator("#tour").isVisible();
   await page.waitForFunction(() => window.viz.state.year === 2050 && !window.viz.state.playing, null, { timeout: 20000 });
@@ -275,7 +301,7 @@ function check(name, ok, detail = "") {
     JSON.stringify(afterTour)
   );
 
-  // 13. Layout at phone width: nothing overflows sideways.
+  // 14. Layout at phone width: nothing overflows sideways.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(400);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

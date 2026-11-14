@@ -1,11 +1,12 @@
 // The selected place: a headline year, its warming curves and each model's answer.
 import { SCENARIOS } from "./data.js";
 import { showTooltip, hideTooltip, node } from "./tooltip.js";
+import { TODAY, agePhrase, lifetimeParts } from "./lifetime.js";
 const d3 = window.d3;
 
-const TODAY = 2026;
 const X_DOMAIN = [1960, 2090];
-const LINE_H = 282;
+const AGE_ROW = 13; // a second row of axis labels: the reader's age in those years
+const LINE_H = 295;
 const STRIP_H = 108;
 const M = { top: 12, right: 100, bottom: 20, left: 32 };
 
@@ -21,6 +22,7 @@ export class PlacePanel {
     this.subEl = document.getElementById("place-sub");
     this.heroYear = document.getElementById("hero-year");
     this.heroText = document.getElementById("hero-text");
+    this.lifetimeText = document.getElementById("lifetime-text");
     this.lineWrap = document.getElementById("line-wrap");
     this.stripWrap = document.getElementById("strip-wrap");
     this.stripTitle = document.getElementById("strip-title");
@@ -28,6 +30,7 @@ export class PlacePanel {
     this.line = d3.select("#line-svg");
     this.gGrid = this.line.append("g").attr("class", "chart-axis");
     this.gXAxis = this.line.append("g").attr("class", "chart-axis");
+    this.gAge = this.line.append("g").attr("class", "chart-axis age-axis");
     this.todayLine = this.line.append("line").attr("class", "chart-base");
     this.todayText = this.line.append("text").attr("class", "strip-label").attr("text-anchor", "middle").text("today");
     this.band = this.line.append("path").attr("class", "band");
@@ -64,7 +67,7 @@ export class PlacePanel {
     this._stripChart(state);
   }
 
-  _text({ place, level, scenario }) {
+  _text({ place, level, scenario, birth }) {
     const { data } = this;
     const a = data.placeArrival(scenario, level, place.cell);
     this.summary = a;
@@ -102,13 +105,14 @@ export class PlacePanel {
       parts.push([a.nReached === 0 ? "no model reaches it and stays there. " : `only ${a.nReached} of ${a.nModel} models reach it and stay there. `, false]);
       parts.push([world !== null ? `The world average arrives in ${world}.` : "The world average does not arrive by 2090.", true]);
     }
-    this.heroText.replaceChildren(
-      ...parts.map(([t, strong]) => (strong ? node("strong", "", t) : document.createTextNode(t)))
-    );
+    const toNodes = (list) => list.map(([t, strong]) => (strong ? node("strong", "", t) : document.createTextNode(t)));
+    this.heroText.replaceChildren(...toNodes(parts));
+    this.lifetimeText.replaceChildren(...toNodes(lifetimeParts(a.median, birth, data.lastYear)));
   }
 
-  _lineChart({ place, level, scenario }) {
+  _lineChart({ place, level, scenario, birth }) {
     const { data, width } = this;
+    const yb = LINE_H - M.bottom - AGE_ROW; // bottom of the plot area
     const svg = this.line;
     svg.attr("viewBox", `0 0 ${width} ${LINE_H}`).attr("height", LINE_H);
     const cell = place.cell;
@@ -125,7 +129,7 @@ export class PlacePanel {
     const yMax = Math.max(lv + 0.5, d3.max(allHi));
     const yMin = Math.min(-0.5, d3.min(allLo));
     const x = d3.scaleLinear(X_DOMAIN, [M.left, width - M.right]);
-    const y = d3.scaleLinear([yMin, yMax], [LINE_H - M.bottom, M.top]).nice(5);
+    const y = d3.scaleLinear([yMin, yMax], [yb, M.top]).nice(5);
     this.lx = x;
 
     this.gGrid.selectAll("*").remove();
@@ -135,9 +139,20 @@ export class PlacePanel {
     });
     this.gXAxis.selectAll("*").remove();
     d3.range(1960, 2091, 20).forEach((t) => {
-      this.gXAxis.append("text").attr("x", x(t)).attr("y", LINE_H - 5).attr("text-anchor", "middle").text(t);
+      this.gXAxis.append("text").attr("x", x(t)).attr("y", yb + 15).attr("text-anchor", "middle").text(t);
     });
-    this.todayLine.attr("x1", x(TODAY)).attr("x2", x(TODAY)).attr("y1", M.top).attr("y2", LINE_H - M.bottom);
+    // The reader's age in the same years, when they have given a birth year.
+    this.gAge.selectAll("*").remove();
+    if (birth) {
+      let first = true;
+      d3.range(1960, 2091, 20).forEach((t) => {
+        const age = t - birth;
+        if (age < 0 || age > 100) return;
+        this.gAge.append("text").attr("x", x(t)).attr("y", yb + 15 + AGE_ROW).attr("text-anchor", "middle").text(first ? `age ${age}` : age);
+        first = false;
+      });
+    }
+    this.todayLine.attr("x1", x(TODAY)).attr("x2", x(TODAY)).attr("y1", M.top).attr("y2", yb);
     this.todayText.attr("x", x(TODAY)).attr("y", M.top - 3);
 
     const line = d3.line().x((d) => x(d.year)).y((d) => y(d.v)).curve(d3.curveMonotoneX);
@@ -168,7 +183,7 @@ export class PlacePanel {
     if (a.median !== null) {
       const ax = x(Math.max(a.median, X_DOMAIN[0]));
       this.arrivalDot.attr("display", null).attr("cx", ax).attr("cy", y(lv));
-      this.dropLine.attr("display", null).attr("x1", ax).attr("x2", ax).attr("y1", y(lv)).attr("y2", LINE_H - M.bottom);
+      this.dropLine.attr("display", null).attr("x1", ax).attr("x2", ax).attr("y1", y(lv)).attr("y2", yb);
     } else {
       this.arrivalDot.attr("display", "none");
       this.dropLine.attr("display", "none");
@@ -194,7 +209,7 @@ export class PlacePanel {
     labels.forEach((d, i) => {
       d.y = i === 0 ? d.y0 : Math.max(d.y0, labels[i - 1].y + gap);
     });
-    const overflow = labels[labels.length - 1].y - (LINE_H - M.bottom);
+    const overflow = labels[labels.length - 1].y - (yb);
     if (overflow > 0) {
       labels[labels.length - 1].y -= overflow;
       for (let i = labels.length - 2; i >= 0; i--) labels[i].y = Math.min(labels[i].y, labels[i + 1].y - gap);
@@ -228,13 +243,13 @@ export class PlacePanel {
       .attr("x", M.left)
       .attr("y", M.top)
       .attr("width", width - M.left - M.right)
-      .attr("height", LINE_H - M.top - M.bottom)
+      .attr("height", yb - M.top)
       .on("pointermove", (event) => {
         const [mx] = d3.pointer(event, svg.node());
         const yr = x.invert(mx);
         const i = d3.bisector((d) => d.year).center(world, yr);
         const year = world[i].year;
-        this.crossLine.attr("display", null).attr("x1", x(year)).attr("x2", x(year)).attr("y1", M.top).attr("y2", LINE_H - M.bottom);
+        this.crossLine.attr("display", null).attr("x1", x(year)).attr("x2", x(year)).attr("y1", M.top).attr("y2", yb);
         showTooltip(event, (tip) => {
           tip.append(node("div", "tt-head", year));
           const rows = SCENARIOS.map((sc, s) => ({ c: sc.color, n: sc.code, v: all[s][i].v }))
@@ -350,6 +365,8 @@ export class PlacePanel {
         }
         showTooltip(event, (tip) => {
           tip.append(node("div", "tt-value", best.year === null ? "Not by 2090" : best.year), node("div", "tt-head", best.model));
+          const phrase = agePhrase(best.year, this.state.birth);
+          if (phrase) tip.append(node("div", "", phrase));
         });
       })
       .on("pointerleave", () => {

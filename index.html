@@ -73,6 +73,11 @@
         <div class="hero-year" id="hero-year"></div>
         <div class="hero-text" id="hero-text"></div>
       </div>
+      <div class="lifetime">
+        <label for="birth-year">Born in</label>
+        <input id="birth-year" type="number" inputmode="numeric" min="1900" max="2026" step="1" value="2005" aria-describedby="lifetime-text">
+        <span class="lifetime-text" id="lifetime-text" aria-live="polite"></span>
+      </div>
       <div class="chart-title">Warming at this place, compared with its 1850–1900 average</div>
       <p class="chart-note">Lines: median of the models, smoothed over 20 years. Band: middle 80% of models for the selected scenario. Dot: median arrival year.</p>
       <div class="chart-wrap" id="line-wrap"><svg id="line-svg" role="img" aria-label="Line chart of warming over time at the selected place for each emissions scenario."></svg></div>

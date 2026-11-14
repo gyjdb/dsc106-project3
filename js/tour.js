@@ -77,7 +77,7 @@ export function createTour({ data, api, places }) {
     },
     {
       title: "Now find your own place.",
-      body: () => "Search for a city, or click anywhere on the map. Then try another warming level.",
+      body: () => "Search for a city or click anywhere on the map, and enter your birth year to see how old you would be.",
       apply: () => {
         api.setLevel(level);
         api.setScenario(MIDDLE);

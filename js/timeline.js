@@ -1,7 +1,7 @@
 // Time control whose track is also a chart: the share of land and ocean that has
 // passed the level by each year. A native range input keeps it keyboard accessible.
+import { TODAY } from "./lifetime.js";
 const d3 = window.d3;
-const TODAY = 2026;
 const THUMB = 20; // keep in sync with the thumb width in style.css
 const M = { top: 18, right: 72, bottom: 22, left: 34 };
 const H = 86;

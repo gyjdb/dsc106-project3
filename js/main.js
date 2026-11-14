@@ -4,6 +4,7 @@ import { ArrivalMap, BINS, binOf } from "./map.js";
 import { Timeline } from "./timeline.js";
 import { PlacePanel } from "./place.js";
 import { createTour } from "./tour.js";
+import { agePhrase, parseBirthYear } from "./lifetime.js";
 import { showTooltip, hideTooltip, node } from "./tooltip.js";
 
 const d3 = window.d3;
@@ -50,6 +51,7 @@ async function init() {
     year: data.lastYear,
     place: null,
     playing: false,
+    birth: null, // the reader's birth year, if they give one
   };
 
   // A 2.5-degree cell is about 280 km north to south and narrows toward the poles.
@@ -149,6 +151,8 @@ async function init() {
                 : `${a.nReached} of ${a.nModel} models arrive, ${a.earliest}–${a.latest}`
           )
         );
+        const phrase = agePhrase(a.median, state.birth);
+        if (phrase) tip.append(node("div", "", phrase));
       });
     },
     onLeave: hideTooltip,
@@ -289,6 +293,14 @@ async function init() {
     });
   }
   playBtn.addEventListener("click", () => (state.playing ? stopPlaying() : startPlaying()));
+
+  /* Birth year */
+  const birthInput = document.getElementById("birth-year");
+  state.birth = parseBirthYear(birthInput.value);
+  birthInput.addEventListener("input", () => {
+    state.birth = parseBirthYear(birthInput.value);
+    renderPlace();
+  });
 
   /* Search */
   const seen = new Map();
