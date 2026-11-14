@@ -27,6 +27,8 @@ async function fetchJson(url) {
 }
 
 export class ClimateData {
+  static NO_STRIPE = 254; // arrival codes stop at 240, and 255 means not reached
+
   constructor(meta, arrival, series, land, cities, topo) {
     this.meta = meta;
     this.arrival = arrival;
@@ -123,6 +125,29 @@ export class ClimateData {
     const rank = Math.floor(nModel / 2);
     const out = new Uint8Array(nCell);
     for (let c = 0; c < nCell; c++) out[c] = sorted[c * nModel + rank];
+    return out;
+  }
+
+  /**
+   * Where the models split on whether a place arrives at all, the map draws stripes.
+   * Returns one byte per cell: NO_STRIPE, or the code to alternate with the median's.
+   * A split cell is one where between a third and two thirds of the models arrive.
+   */
+  splitStripes(s, l) {
+    const sorted = this.sortedArrival(s, l);
+    const { nCell, nModel, notReached } = this;
+    const lo = Math.ceil(nModel / 3);
+    const hi = Math.floor((2 * nModel) / 3);
+    const rank = Math.floor(nModel / 2);
+    const out = new Uint8Array(nCell).fill(ClimateData.NO_STRIPE);
+    for (let c = 0; c < nCell; c++) {
+      const base = c * nModel;
+      let reach = 0;
+      while (reach < nModel && sorted[base + reach] !== notReached) reach++;
+      if (reach < lo || reach > hi) continue;
+      // A colored cell alternates with gray; a gray cell with the median year of the models that do arrive.
+      out[c] = sorted[base + rank] !== notReached ? notReached : sorted[base + Math.floor((reach - 1) / 2)];
+    }
     return out;
   }
 

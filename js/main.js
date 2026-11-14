@@ -204,6 +204,12 @@ async function init() {
       swarm.setIsolated(null);
     });
 
+  // One more legend entry, for the stripes drawn where the models split
+  const stripeKey = node("div", "legend-stripes");
+  stripeKey.title = "Between a third and two thirds of the models have it arriving by 2090; the rest do not.";
+  stripeKey.append(node("i", "stripe-swatch"), node("span", "", "Stripes: models split"));
+  document.getElementById("legend").append(stripeKey);
+
   /* The largest cities as a dot plot, linked to the map */
   const swarm = new CitySwarm({
     wrap: document.getElementById("swarm-wrap"),
@@ -258,8 +264,8 @@ async function init() {
     const scen = SCENARIOS[state.scenario];
     titleLevel.textContent = lv;
     document.title = `When Does ${lv} Arrive?`;
-    subtitle.textContent = `Color shows the year a place’s 20-year average temperature reaches ${lv} above its 1850–1900 level and stays there: the median of ${data.nModel} CMIP6 climate models under ${scen.code}, the “${scen.label.toLowerCase()}” emissions scenario. This is warming at each place, not the world average: land warms faster than the oceans, so most places on land get there before the world as a whole.`;
-    map.setField(data.medianArrival(state.scenario, state.level));
+    subtitle.textContent = `Color shows the year each place’s 20-year average temperature reaches ${lv} above its own 1850–1900 level and stays there. This is local warming, not the world average. Median of ${data.nModel} CMIP6 climate models under ${scen.code}, the “${scen.label.toLowerCase()}” emissions scenario.`;
+    map.setField(data.medianArrival(state.scenario, state.level), data.splitStripes(state.scenario, state.level));
     timeline.update({
       curves: data.areaCurves(state.scenario, state.level),
       worldYear: data.worldArrival(state.scenario, state.level),

@@ -112,7 +112,7 @@ export class PlacePanel {
     const world = data.worldArrival(scenario, level);
     const parts = [];
     if (a.median !== null) {
-      parts.push(["is when this place’s 20-year average reaches ", false], [fmtLevel(lv), true], [` and stays there, under ${scen.code}: the median of ${a.nModel} models. `, false]);
+      parts.push(["is when this place’s 20-year average reaches ", false], [fmtLevel(lv), true], [` and stays there (median of ${a.nModel} models, ${scen.code}). `, false]);
       if (a.nReached > 0) {
         parts.push(
           a.earliest === a.latest

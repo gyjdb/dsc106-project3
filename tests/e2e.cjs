@@ -59,11 +59,13 @@ function check(name, ok, detail = "") {
     const { data, map, state, binOf } = window.viz;
     const BINS = ["#6b0f1a", "#b3261e", "#e4572e", "#f59e4c", "#fbd28a", "#edece8"].map((h) => window.d3.color(h));
     const codes = data.medianArrival(state.scenario, state.level);
+    const stripes = data.splitStripes(state.scenario, state.level);
     const ctx = map.canvas.getContext("2d");
     const kx = map.canvas.width / map.width;
     const ky = map.canvas.height / map.height;
     let tested = 0;
     let bad = 0;
+    let striped = 0;
     const samples = [];
     for (let j = 6; j < data.nlat - 6; j++) {
       for (let i = 0; i < data.nlon; i++) {
@@ -75,16 +77,23 @@ function check(name, ok, detail = "") {
         const [x, y] = map.projection([lon, lat]);
         const px = ctx.getImageData(Math.floor(x * kx), Math.floor(y * ky), 1, 1).data;
         const col = BINS[binOf(data.yearOf(codes[c]))];
+        const same = (k) => px[0] === k.r && px[1] === k.g && px[2] === k.b;
         tested++;
-        if (!(px[0] === col.r && px[1] === col.g && px[2] === col.b)) {
+        // A cell where the models split is striped: either of its two colors is right there.
+        if (stripes[c] !== 254) {
+          striped++;
+          if (!same(col) && !same(BINS[binOf(data.yearOf(stripes[c]))])) bad++;
+          continue;
+        }
+        if (!same(col)) {
           bad++;
           if (samples.length < 4) samples.push({ lat, lon, want: col.formatHex(), px: [...px] });
         }
       }
     }
-    return { tested, bad, samples };
+    return { tested, bad, striped, samples };
   });
-  check("map pixels match the data at every cell center", align.tested === 8580 && align.bad === 0, `tested ${align.tested}, wrong ${align.bad} ${JSON.stringify(align.samples)}`);
+  check("map pixels match the data at every cell center", align.tested === 8580 && align.bad === 0 && align.striped > 500, `tested ${align.tested}, striped ${align.striped}, wrong ${align.bad} ${JSON.stringify(align.samples)}`);
 
   // 2. Clicking the map selects the place under the pointer.
   const clickTarget = await page.evaluate(() => {

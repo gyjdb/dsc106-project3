@@ -15,6 +15,7 @@ export const BINS = [
 const NOT_YET = "#edece8";
 const DIMMED = "#f6f5f2";
 const ISOLATED_NEUTRAL = "#a9a89f";
+const NO_STRIPE = 254; // same value as ClimateData.NO_STRIPE
 const ROTATE = 11; // map center longitude: keeps Russia and Alaska in one piece
 
 export function binOf(year) {
@@ -102,9 +103,7 @@ export class ArrivalMap {
     this._drawCallouts();
     this._drawMarker();
     this.setLinked(this.linked || null);
-    if (this.codes) {
-      this.setField(this.codes);
-    }
+    if (this.codes) this._paint();
   }
 
   /** For each canvas pixel, find the grid cell it falls in. */
@@ -118,6 +117,8 @@ export class ArrivalMap {
     const max = cw * ch;
     const pos = new Int32Array(max);
     const cell = new Uint16Array(max);
+    const stripe = new Uint8Array(max); // 1 on the pixels of every other diagonal band
+    const band = Math.max(2, Math.round(3 / sx)); // about 3 CSS pixels: finer hatching goes unnoticed
     let n = 0;
     for (let py = 0; py < ch; py++) {
       const Y = (ty - (py + 0.5) * sy) / k;
@@ -133,15 +134,20 @@ export class ArrivalMap {
         const i = Math.floor((((lon % 360) + 360) % 360) / step) % nlon;
         pos[n] = py * cw + px;
         cell[n] = j * nlon + i;
+        stripe[n] = Math.floor((px + py) / band) & 1;
         n++;
       }
     }
-    this.lookup = { n, pos, cell };
+    this.lookup = { n, pos, cell, stripe };
   }
 
-  /** Set the arrival field: one byte per cell, year - 1850, 255 for not reached. */
-  setField(codes) {
+  /**
+   * Set the arrival field: one byte per cell, year - 1850, 255 for not reached.
+   * `stripes` optionally gives a second code per cell to alternate with (see splitStripes).
+   */
+  setField(codes, stripes = null) {
     this.codes = codes;
+    this.stripes = stripes;
     this._paint();
   }
 
@@ -180,10 +186,18 @@ export class ArrivalMap {
       }
       lut[v] = color;
     }
-    const { n, pos, cell } = this.lookup;
+    const { n, pos, cell, stripe } = this.lookup;
     const codes = this.codes;
+    const alt = this.stripes;
     const px = this.pixels;
-    for (let p = 0; p < n; p++) px[pos[p]] = lut[codes[cell[p]]];
+    if (alt) {
+      for (let p = 0; p < n; p++) {
+        const c = cell[p];
+        px[pos[p]] = lut[stripe[p] && alt[c] !== NO_STRIPE ? alt[c] : codes[c]];
+      }
+    } else {
+      for (let p = 0; p < n; p++) px[pos[p]] = lut[codes[cell[p]]];
+    }
     this.ctx.putImageData(this.image, 0, 0);
   }
 
