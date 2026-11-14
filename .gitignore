@@ -1,0 +1,11 @@
+__pycache__/
+.DS_Store
+.claude/
+checkpoint/.video-work/
+checkpoint/*.mp4
+checkpoint/*.m4a
+handoff/
+team_notes/
+checkpoint/
+research_notes/
+reports/

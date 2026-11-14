@@ -1,0 +1,303 @@
+{
+ "n_models": 17,
+ "global": {
+  "SSP1-2.6": {
+   "y2090": 1.76,
+   "arrival_2C_median": null
+  },
+  "SSP2-4.5": {
+   "y2090": 2.59,
+   "arrival_2C_median": 2056
+  },
+  "SSP3-7.0": {
+   "y2090": 3.57,
+   "arrival_2C_median": 2047
+  },
+  "SSP5-8.5": {
+   "y2090": 4.07,
+   "arrival_2C_median": 2044
+  },
+  "spread_by_year": {
+   "2030": 0.09,
+   "2040": 0.33,
+   "2050": 0.66,
+   "2060": 1.05
+  }
+ },
+ "map": {
+  "global": 2.64,
+  "arctic_66N": 6.48,
+  "land": 3.47,
+  "ocean": 2.29,
+  "north_atlantic_52N35W": 0.41,
+  "southern_ocean_57S60W": 1.26,
+  "min_cell": 0.11,
+  "max_cell": 9.45
+ },
+ "latitude_arrival_2C": {
+  "arctic": 2005,
+  "tropics": 2063,
+  "southern_ocean": null
+ },
+ "agreement": {
+  "threshold": 0.8,
+  "pr_area_agree": 0.482,
+  "tas_area_agree": 0.989,
+  "pr_land_agree": 0.548,
+  "tas_land_agree": 1.0
+ },
+ "cities": {
+  "Singapore": {
+   "median": 2065,
+   "earliest": 2030,
+   "latest": 2085,
+   "n_reached": 12
+  },
+  "São Paulo": {
+   "median": 2061,
+   "earliest": 2029,
+   "latest": 2090,
+   "n_reached": 16
+  },
+  "Nairobi": {
+   "median": 2055,
+   "earliest": 2039,
+   "latest": 2081,
+   "n_reached": 17
+  },
+  "Sydney": {
+   "median": 2053,
+   "earliest": 2025,
+   "latest": 2088,
+   "n_reached": 14
+  },
+  "Beijing": {
+   "median": 2049,
+   "earliest": 2017,
+   "latest": 2076,
+   "n_reached": 17
+  },
+  "Madrid": {
+   "median": 2043,
+   "earliest": 2015,
+   "latest": 2062,
+   "n_reached": 17
+  },
+  "San Diego": {
+   "median": 2043,
+   "earliest": 2023,
+   "latest": 2078,
+   "n_reached": 17
+  },
+  "Phoenix": {
+   "median": 2037,
+   "earliest": 2017,
+   "latest": 2061,
+   "n_reached": 17
+  },
+  "Moscow": {
+   "median": 2028,
+   "earliest": 2008,
+   "latest": 2055,
+   "n_reached": 17
+  },
+  "Longyearbyen": {
+   "median": 1996,
+   "earliest": 1951,
+   "latest": 2021,
+   "n_reached": 17
+  }
+ },
+ "model_range_2C_ssp245": {
+  "median_range_years_cells_all_models_reach": 58.0,
+  "area_share_all_models_reach": 0.239
+ },
+ "shares": {
+  "SSP1-2.6|+1.5": {
+   "land_by_2025": 0.596,
+   "land_by_2050": 0.919,
+   "ocean_by_2050": 0.215,
+   "land_by_2090": 0.963,
+   "ocean_by_2090": 0.407
+  },
+  "SSP1-2.6|+2": {
+   "land_by_2025": 0.163,
+   "land_by_2050": 0.589,
+   "ocean_by_2050": 0.076,
+   "land_by_2090": 0.738,
+   "ocean_by_2090": 0.101
+  },
+  "SSP1-2.6|+3": {
+   "land_by_2025": 0.018,
+   "land_by_2050": 0.098,
+   "ocean_by_2050": 0.043,
+   "land_by_2090": 0.139,
+   "ocean_by_2090": 0.047
+  },
+  "SSP1-2.6|+4": {
+   "land_by_2025": 0.0,
+   "land_by_2050": 0.02,
+   "ocean_by_2050": 0.027,
+   "land_by_2090": 0.039,
+   "ocean_by_2090": 0.034
+  },
+  "SSP2-4.5|+1.5": {
+   "land_by_2025": 0.611,
+   "land_by_2050": 0.979,
+   "ocean_by_2050": 0.58,
+   "land_by_2090": 0.999,
+   "ocean_by_2090": 0.915
+  },
+  "SSP2-4.5|+2": {
+   "land_by_2025": 0.18,
+   "land_by_2050": 0.786,
+   "ocean_by_2050": 0.101,
+   "land_by_2090": 0.991,
+   "ocean_by_2090": 0.62
+  },
+  "SSP2-4.5|+3": {
+   "land_by_2025": 0.024,
+   "land_by_2050": 0.181,
+   "ocean_by_2050": 0.045,
+   "land_by_2090": 0.685,
+   "ocean_by_2090": 0.082
+  },
+  "SSP2-4.5|+4": {
+   "land_by_2025": 0.0,
+   "land_by_2050": 0.055,
+   "ocean_by_2050": 0.035,
+   "land_by_2090": 0.185,
+   "ocean_by_2090": 0.047
+  },
+  "SSP3-7.0|+1.5": {
+   "land_by_2025": 0.596,
+   "land_by_2050": 0.982,
+   "ocean_by_2050": 0.728,
+   "land_by_2090": 1.0,
+   "ocean_by_2090": 0.992
+  },
+  "SSP3-7.0|+2": {
+   "land_by_2025": 0.181,
+   "land_by_2050": 0.855,
+   "ocean_by_2050": 0.128,
+   "land_by_2090": 1.0,
+   "ocean_by_2090": 0.932
+  },
+  "SSP3-7.0|+3": {
+   "land_by_2025": 0.02,
+   "land_by_2050": 0.279,
+   "ocean_by_2050": 0.051,
+   "land_by_2090": 0.972,
+   "ocean_by_2090": 0.385
+  },
+  "SSP3-7.0|+4": {
+   "land_by_2025": 0.001,
+   "land_by_2050": 0.071,
+   "ocean_by_2050": 0.038,
+   "land_by_2090": 0.73,
+   "ocean_by_2090": 0.081
+  },
+  "SSP5-8.5|+1.5": {
+   "land_by_2025": 0.666,
+   "land_by_2050": 0.998,
+   "ocean_by_2050": 0.812,
+   "land_by_2090": 1.0,
+   "ocean_by_2090": 1.0
+  },
+  "SSP5-8.5|+2": {
+   "land_by_2025": 0.247,
+   "land_by_2050": 0.939,
+   "ocean_by_2050": 0.23,
+   "land_by_2090": 1.0,
+   "ocean_by_2090": 0.98
+  },
+  "SSP5-8.5|+3": {
+   "land_by_2025": 0.036,
+   "land_by_2050": 0.463,
+   "ocean_by_2050": 0.056,
+   "land_by_2090": 0.996,
+   "ocean_by_2090": 0.723
+  },
+  "SSP5-8.5|+4": {
+   "land_by_2025": 0.0,
+   "land_by_2050": 0.105,
+   "ocean_by_2050": 0.041,
+   "land_by_2090": 0.919,
+   "ocean_by_2090": 0.163
+  }
+ },
+ "place_arrival_2C": {
+  "Longyearbyen": {
+   "SSP1-2.6": 1997,
+   "SSP2-4.5": 1996,
+   "SSP3-7.0": 1997,
+   "SSP5-8.5": 1996
+  },
+  "Moscow": {
+   "SSP1-2.6": 2024,
+   "SSP2-4.5": 2028,
+   "SSP3-7.0": 2027,
+   "SSP5-8.5": 2025
+  },
+  "Phoenix": {
+   "SSP1-2.6": 2035,
+   "SSP2-4.5": 2037,
+   "SSP3-7.0": 2034,
+   "SSP5-8.5": 2030
+  },
+  "Madrid": {
+   "SSP1-2.6": 2065,
+   "SSP2-4.5": 2043,
+   "SSP3-7.0": 2038,
+   "SSP5-8.5": 2032
+  },
+  "Beijing": {
+   "SSP1-2.6": 2057,
+   "SSP2-4.5": 2049,
+   "SSP3-7.0": 2052,
+   "SSP5-8.5": 2040
+  },
+  "San Diego": {
+   "SSP1-2.6": 2045,
+   "SSP2-4.5": 2043,
+   "SSP3-7.0": 2040,
+   "SSP5-8.5": 2034
+  },
+  "Nairobi": {
+   "SSP1-2.6": null,
+   "SSP2-4.5": 2055,
+   "SSP3-7.0": 2052,
+   "SSP5-8.5": 2041
+  },
+  "São Paulo": {
+   "SSP1-2.6": null,
+   "SSP2-4.5": 2061,
+   "SSP3-7.0": 2053,
+   "SSP5-8.5": 2047
+  },
+  "Singapore": {
+   "SSP1-2.6": null,
+   "SSP2-4.5": 2065,
+   "SSP3-7.0": 2057,
+   "SSP5-8.5": 2051
+  },
+  "Sydney": {
+   "SSP1-2.6": null,
+   "SSP2-4.5": 2053,
+   "SSP3-7.0": 2051,
+   "SSP5-8.5": 2047
+  },
+  "North Atlantic": {
+   "SSP1-2.6": null,
+   "SSP2-4.5": null,
+   "SSP3-7.0": null,
+   "SSP5-8.5": 2087
+  },
+  "Southern Ocean": {
+   "SSP1-2.6": null,
+   "SSP2-4.5": null,
+   "SSP3-7.0": null,
+   "SSP5-8.5": 2089
+  }
+ }
+}

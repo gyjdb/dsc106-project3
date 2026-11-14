@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>When Does Warming Arrive?</title>
+  <meta name="description" content="An interactive map of when each place on Earth passes a warming level, from 17 CMIP6 climate models.">
+  <meta name="author" content="The Avengineers: Ethan Cai, Mayur Nookala, Matthew Ramos">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23b3261e'/%3E%3Cpath d='M2 16h28M16 2a22 22 0 0 1 0 28M16 2a22 22 0 0 0 0 28' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="masthead">
+    <h1>When does <span id="title-level">+2 °C</span> arrive where you live?</h1>
+    <p class="subtitle" id="subtitle"></p>
+  </header>
+
+  <form class="controls" id="controls" aria-label="Filters for the map and chart" onsubmit="return false">
+    <fieldset class="segmented" id="level-control">
+      <legend>Warming level</legend>
+    </fieldset>
+    <fieldset class="segmented" id="scenario-control">
+      <legend>Emissions scenario</legend>
+    </fieldset>
+    <div class="search">
+      <label for="place-search">Find a place</label>
+      <input id="place-search" type="search" list="place-list" placeholder="Type a city" autocomplete="off">
+      <datalist id="place-list"></datalist>
+    </div>
+    <div class="tryit">
+      <span class="tryit-label">Or start with</span>
+      <div class="tryit-list" id="story-list"></div>
+    </div>
+  </form>
+
+  <main class="layout">
+    <section class="map-col" aria-label="World map of arrival years">
+      <div class="tour" id="tour" role="region" aria-label="Guided tour" hidden>
+        <p class="tour-text" aria-live="polite"><span class="tour-count" id="tour-count"></span><strong id="tour-title"></strong> <span id="tour-body"></span></p>
+        <div class="tour-nav">
+          <button type="button" id="tour-back">Back</button>
+          <button type="button" id="tour-next" class="primary">Next</button>
+          <button type="button" id="tour-close">Close</button>
+        </div>
+      </div>
+      <div class="reading-row">
+        <p class="reading" id="reading">Loading climate data…</p>
+        <button type="button" class="tour-start" id="tour-start" hidden>Take the tour</button>
+      </div>
+      <div class="map-wrap" id="map-wrap">
+        <canvas id="map-canvas" role="img" aria-label="World map colored by the year each place reaches the selected warming level. The table below the map lists the same values for major cities."></canvas>
+        <svg id="map-svg" aria-hidden="true"></svg>
+        <p class="hint">Click any place<br>Hover the legend<br>Drag the timeline</p>
+      </div>
+      <div class="legend" id="legend" role="group" aria-label="Arrival year legend. Hover or focus a class to isolate it on the map."></div>
+      <div class="timeline-row">
+        <button type="button" id="play" class="play" aria-label="Play arrivals through time">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path id="play-icon" d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+        </button>
+        <div class="timeline" id="timeline">
+          <svg id="timeline-svg" aria-hidden="true"></svg>
+          <input id="year-slider" type="range" min="1980" max="2090" step="1" aria-label="Show arrivals up to this year">
+        </div>
+      </div>
+    </section>
+
+    <aside class="place-col" aria-label="Selected place">
+      <div class="place-head">
+        <div class="place-name" id="place-name"></div>
+        <div class="place-sub" id="place-sub"></div>
+      </div>
+      <div class="hero">
+        <div class="hero-year" id="hero-year"></div>
+        <div class="hero-text" id="hero-text"></div>
+      </div>
+      <div class="chart-title">Warming at this place, compared with its 1850–1900 average</div>
+      <p class="chart-note">Lines: median of the models, smoothed over 20 years. Band: middle 80% of models for the selected scenario. Dot: median arrival year.</p>
+      <div class="chart-wrap" id="line-wrap"><svg id="line-svg" role="img" aria-label="Line chart of warming over time at the selected place for each emissions scenario."></svg></div>
+      <div class="chart-title" id="strip-title">When each climate model says it arrives</div>
+      <div class="chart-wrap" id="strip-wrap"><svg id="strip-svg" role="img" aria-label="Dot plot of the arrival year in each climate model."></svg></div>
+    </aside>
+  </main>
+
+  <section class="table-section">
+    <details id="table-details">
+      <summary>Table: arrival year in major cities</summary>
+      <p class="table-note" id="table-note"></p>
+      <div class="table-scroll">
+        <table id="city-table">
+          <thead><tr><th scope="col">Place</th><th scope="col" class="num">Arrives</th><th scope="col" class="num">Model range</th><th scope="col" class="num">Models that arrive</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="method" id="method">
+    <h2>Data and method</h2>
+    <div class="method-grid">
+      <div>
+        <h3>Source</h3>
+        <p>Monthly near-surface air temperature (<code>tas</code>) from the CMIP6 public archive on Google Cloud: the <em>historical</em> run plus four future scenarios, using one run from each of <span class="n-models"></span> models. Coastlines and city locations come from Natural Earth.</p>
+      </div>
+      <div>
+        <h3>Which models</h3>
+        <p>In the archive, 38 models provide all five experiments, and 25 of them have a transient climate response inside the IPCC AR6 likely range of 1.4–2.2 °C (Hausfather et al., 2022). We use <span class="n-models"></span> of those 25, with no two from the same CMIP6 institution ID. The screen leaves out the “hot models” that warm faster than the evidence supports. Models used: <span id="method-models"></span>.</p>
+      </div>
+      <div>
+        <h3>Transformations</h3>
+        <p>Each model is regridded to a shared 2.5° grid with area weighting and averaged by year. Warming is measured per grid cell against that model’s own 1850–1900 mean, then smoothed with a 20-year running mean. A place “arrives” in the first year after the baseline that this average reaches the level and stays there for at least 20 more years, or to the end of the data, so a short warm spell does not count. The year shown is the middle of that first 20-year period.</p>
+      </div>
+      <div>
+        <h3>Reading it carefully</h3>
+        <p>The map shows the median of the models’ arrival years, one block per grid cell. A city’s value describes its whole cell, up to about 280 km across, not the city itself. Years up to today are model estimates, not observations. “Not by 2090” means the level was not reached and held: the last 20-year period is 2080–2099, and a place can touch a level without staying there. Because the rule looks ahead, arrival years can differ between scenarios from the 1980s on, even though the scenarios share history through 2014.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="credits">
+    <p>Made by The Avengineers (Ethan Cai, Mayur Nookala and Matthew Ramos) for DSC 106 at UC San Diego, Fall 2026. Climate data: CMIP6 on Google Cloud. Coastlines and cities: Natural Earth. Drawn with D3.</p>
+  </footer>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+
+  <script src="js/vendor/d3.v7.9.0.min.js"></script>
+  <script src="js/vendor/topojson-client.3.1.0.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
