@@ -45,6 +45,9 @@ export class ArrivalMap {
     this.sphere = this.gCoast.append("path").attr("class", "sphere");
     this.gCallouts = this.svg.append("g");
     this.hoverCell = this.svg.append("path").attr("class", "hover-cell").attr("display", "none");
+    this.linkRing = this.svg.append("g").attr("display", "none").attr("pointer-events", "none");
+    this.linkRing.append("circle").attr("class", "marker-ring").attr("r", 9);
+    this.linkRing.append("circle").attr("class", "link-ring").attr("r", 9);
     this.gMarker = this.svg.append("g").attr("display", "none");
     this.gMarker.append("circle").attr("class", "marker-ring").attr("r", 7);
     this.gMarker.append("circle").attr("class", "marker-dot").attr("r", 7);
@@ -98,6 +101,7 @@ export class ArrivalMap {
     this._buildLookup(cw, ch);
     this._drawCallouts();
     this._drawMarker();
+    this.setLinked(this.linked || null);
     if (this.codes) {
       this.setField(this.codes);
     }
@@ -200,6 +204,17 @@ export class ArrivalMap {
       .text(this.place.name)
       .attr("x", right ? 11 : -11)
       .attr("text-anchor", right ? "start" : "end");
+  }
+
+  /** Ring a place that is being pointed at in another chart, or pass null to clear it. */
+  setLinked(place) {
+    this.linked = place;
+    if (!place || !this.width) {
+      this.linkRing.attr("display", "none");
+      return;
+    }
+    const [x, y] = this.projection([place.lon, place.lat]);
+    this.linkRing.attr("display", null).attr("transform", `translate(${x},${y})`);
   }
 
   setCallouts(list) {

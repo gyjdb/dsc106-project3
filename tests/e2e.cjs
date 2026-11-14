@@ -215,7 +215,7 @@ function check(name, ok, detail = "") {
   // 10. Table twin.
   await page.locator("#table-details summary").click();
   const rows = await page.locator("#city-table tbody tr").count();
-  check("table lists cities", rows === 80, String(rows));
+  check("table lists cities", rows === 300, String(rows));
   const firstName = (await page.locator("#city-table tbody tr td").first().innerText()).split(",")[0];
   await page.locator("#city-table tbody tr").first().click();
   check("table row selects the place", (await page.locator("#place-name").innerText()) === firstName, firstName);
@@ -274,11 +274,62 @@ function check(name, ok, detail = "") {
   check("an empty birth year turns the ages off", /Enter your birth year/.test(life6) && noAges === 0, life6);
   await page.locator("#birth-year").fill("2005");
 
-  // 13. Guided tour: every step sets the state it describes.
+  // 13. Cities dot plot: one dot per city, no overlaps, linked to the map and the panel.
+  const settle = () => page.waitForTimeout(1100); // dots take about a second to move
+  const swarmStats = () =>
+    page.evaluate(() => {
+      const { data, state } = window.viz;
+      const cs = [...document.querySelectorAll("#swarm-svg circle.swarm-dot")].map((c) => ({ x: +c.getAttribute("cx"), y: +c.getAttribute("cy"), r: +c.getAttribute("r"), d: c.__data__ }));
+      let overlaps = 0;
+      for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) if (Math.hypot(cs[i].x - cs[j].x, cs[i].y - cs[j].y) < cs[i].r + cs[j].r - 1.2) overlaps++;
+      const median = data.medianArrival(state.scenario, state.level);
+      const want = cs.map((c) => data.yearOf(median[c.d.place.cell]));
+      const wrongYear = cs.filter((c, i) => c.d.year !== want[i]).length;
+      const never = want.filter((y) => y === null).length;
+      const byYear = want.filter((y) => y !== null && y <= state.year).length;
+      return { n: cs.length, overlaps, wrongYear, never, gray: cs.filter((c) => c.d.year === null).length, byYear, label: document.querySelector(".swarm-play-label").textContent };
+    });
+  await page.locator("#story-list button").first().click();
+  await settle();
+  let sw = await swarmStats();
+  check("dot plot shows 300 cities at the right years without overlaps", sw.n === 300 && sw.overlaps === 0 && sw.wrongYear === 0, JSON.stringify(sw));
+  check("dot plot counts arrivals", sw.label === `By 2090: ${sw.byYear} of 300 cities`, sw.label);
+  const tokyoDot = await page.evaluate(() => {
+    const c = [...document.querySelectorAll("#swarm-svg circle.swarm-dot")].find((el) => el.__data__.c.n === "Tokyo");
+    c.scrollIntoView({ block: "center" });
+    const r = c.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.mouse.move(tokyoDot.x, tokyoDot.y);
+  const swarmTip = await page.locator("#tooltip").innerText();
+  const ringShown = await page.evaluate(() => getComputedStyle(document.querySelector("#map-svg .link-ring").parentNode).display !== "none");
+  check("hovering a city dot names it and rings it on the map", /Tokyo/.test(swarmTip) && ringShown, swarmTip.replace(/\n/g, " "));
+  await page.mouse.click(tokyoDot.x, tokyoDot.y);
+  check("clicking a city dot selects the city", (await page.locator("#place-name").innerText()) === "Tokyo");
+  await page.mouse.move(5, 5);
+  await page.locator("#scenario-control label").nth(0).click();
+  await settle();
+  sw = await swarmStats();
+  check("dots regroup when the scenario changes", sw.overlaps === 0 && sw.wrongYear === 0 && sw.gray === sw.never && sw.never > 100, JSON.stringify(sw));
+  await page.locator("#scenario-control label").nth(3).click();
+  await page.locator("#level-control label").nth(3).click();
+  await settle();
+  sw = await swarmStats();
+  check("dots stay apart in the densest setting", sw.overlaps === 0 && sw.wrongYear === 0, JSON.stringify(sw));
+  await page.locator("#level-control label").nth(1).click();
+  await page.locator("#scenario-control label").nth(1).click();
+  await page.evaluate(() => window.viz.setYear(2050));
+  sw = await swarmStats();
+  check("dot plot follows the timeline", sw.label === `By 2050: ${sw.byYear} of 300 cities` && sw.byYear > 0 && sw.byYear < 300, sw.label);
+  await page.evaluate(() => window.viz.setYear(2090));
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.locator("#story-list button").first().click();
+
+  // 14. Guided tour: every step sets the state it describes.
   await page.locator("#tour-start").click();
   const tourOpen = await page.locator("#tour").isVisible();
   await page.waitForFunction(() => window.viz.state.year === 2050 && !window.viz.state.playing, null, { timeout: 20000 });
-  check("tour opens and step 1 plays to 2050", tourOpen && (await page.locator("#tour-count").innerText()).trim() === "1 of 5");
+  check("tour opens and step 1 plays to 2050", tourOpen && (await page.locator("#tour-count").innerText()).trim() === "1 of 6");
   await page.locator("#tour-next").click();
   const step2 = await page.locator("#tour-body").innerText();
   check("tour step 2 selects the Arctic", (await page.locator("#place-name").innerText()) === "Svalbard" && /years before the world average/.test(step2), step2);
@@ -289,8 +340,16 @@ function check(name, ok, detail = "") {
   const step4 = await page.locator("#tour-body").innerText();
   check("tour step 4 switches to the low scenario", (await page.evaluate(() => window.viz.state.scenario)) === 0 && /% of the ocean/.test(step4), step4);
   await page.locator("#tour-back").click();
-  check("tour can go back", (await page.locator("#tour-count").innerText()).trim() === "3 of 5" && (await page.evaluate(() => window.viz.state.scenario)) === 1);
+  check("tour can go back", (await page.locator("#tour-count").innerText()).trim() === "3 of 6" && (await page.evaluate(() => window.viz.state.scenario)) === 1);
   await page.locator("#tour-next").click();
+  await page.locator("#tour-next").click();
+  const step5 = await page.locator("#tour-body").innerText();
+  const citiesInView = await page.evaluate(async () => {
+    await new Promise((r) => setTimeout(r, 900));
+    const r = document.querySelector(".cities").getBoundingClientRect();
+    return r.top < innerHeight && r.bottom > 0;
+  });
+  check("tour step 5 brings up the cities", citiesInView && /High-latitude cities reach \+2 °C around \d{4}, tropical cities around \d{4}/.test(step5), step5);
   await page.locator("#tour-next").click();
   const lastLabel = (await page.locator("#tour-next").innerText()).trim();
   await page.locator("#tour-next").click();
@@ -301,7 +360,7 @@ function check(name, ok, detail = "") {
     JSON.stringify(afterTour)
   );
 
-  // 14. Layout at phone width: nothing overflows sideways.
+  // 15. Layout at phone width: nothing overflows sideways.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(400);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

@@ -4,12 +4,14 @@ import { ArrivalMap, BINS, binOf } from "./map.js";
 import { Timeline } from "./timeline.js";
 import { PlacePanel } from "./place.js";
 import { createTour } from "./tour.js";
+import { CitySwarm } from "./swarm.js";
 import { agePhrase, parseBirthYear } from "./lifetime.js";
 import { showTooltip, hideTooltip, node } from "./tooltip.js";
 
 const d3 = window.d3;
 const fmtLevel = (v) => `+${v} °C`;
 const PLAY_SECONDS = 9;
+const N_CITIES = 300; // how many of the largest cities the dot plot and the table show
 
 const STORIES = [
   { name: "San Diego", city: "San Diego" },
@@ -192,8 +194,27 @@ async function init() {
       if (i === BINS.length - 1) swatch.style.boxShadow = "inset 0 0 0 1px #c3c2b7";
       this.append(swatch, node("span", "", b.label));
     })
-    .on("pointerenter focus", (_, b) => map.setIsolated(BINS.indexOf(b)))
-    .on("pointerleave blur", () => map.setIsolated(null));
+    .on("pointerenter focus", (_, b) => {
+      map.setIsolated(BINS.indexOf(b));
+      swarm.setIsolated(BINS.indexOf(b));
+    })
+    .on("pointerleave blur", () => {
+      map.setIsolated(null);
+      swarm.setIsolated(null);
+    });
+
+  /* The largest cities as a dot plot, linked to the map */
+  const swarm = new CitySwarm({
+    wrap: document.getElementById("swarm-wrap"),
+    svg: document.getElementById("swarm-svg"),
+    data,
+    cities: data.cities.slice(0, N_CITIES).map((c) => ({ c, place: cityPlace(c) })),
+    getBirth: () => state.birth,
+    onHover: (n) => map.setLinked(n ? n.place : null),
+    onSelect: (n) => setPlace(n.place),
+  });
+  const citiesTitle = document.getElementById("cities-title");
+  const citiesNote = document.getElementById("cities-note");
 
   /* Rendering */
   const titleLevel = document.getElementById("title-level");
@@ -243,6 +264,9 @@ async function init() {
       worldYear: data.worldArrival(state.scenario, state.level),
       year: state.year,
     });
+    citiesTitle.textContent = `When ${lv} arrives in the world’s ${N_CITIES} largest cities`;
+    citiesNote.textContent = `Each dot is a city, sized by population and placed at the year its grid cell arrives: the median of ${data.nModel} models under ${scen.code}. Cities in the same grid cell share a year. Hover a dot to find it on the map, or click to select it.`;
+    swarm.update({ level: state.level, scenario: state.scenario, year: state.year, selected: state.place });
     renderReading();
     renderPlace();
     renderTable();
@@ -257,12 +281,14 @@ async function init() {
     state.year = y;
     map.setYear(y);
     timeline.setYear(y);
+    swarm.setYear(y);
     renderReading();
   }
 
   function setPlace(place) {
     state.place = place;
     map.setPlace(place);
+    swarm.setSelected(place);
     renderPlace();
     renderTable();
     storyButtons.attr("aria-pressed", (d) => (d.place && d.place.name === place.name ? "true" : "false"));
@@ -368,7 +394,7 @@ async function init() {
   /* Table twin of the map */
   const details = document.getElementById("table-details");
   const tbody = d3.select("#city-table tbody");
-  const tableCities = data.cities.slice(0, 80);
+  const tableCities = data.cities.slice(0, N_CITIES);
   function renderTable() {
     const lv = fmtLevel(data.meta.levels[state.level]);
     document.getElementById("table-note").textContent = `The ${tableCities.length} largest cities in the dataset, earliest first, for ${lv} under ${SCENARIOS[state.scenario].code}. Select a row to show that place in the chart.`;
@@ -436,6 +462,7 @@ async function init() {
           setYear(from);
           startPlaying(to);
         },
+        cityMedians: () => swarm.rowMedians(),
       },
     });
   }

@@ -23,7 +23,7 @@ body {
   color: var(--ink);
   font: 14px/1.45 var(--sans);
 }
-.masthead, .controls, .layout, .tryit, .table-section, .method, .credits {
+.masthead, .controls, .layout, .tryit, .cities, .table-section, .method, .credits {
   max-width: 1500px;
   margin-left: auto;
   margin-right: auto;
@@ -112,10 +112,28 @@ legend, .search label {
 .reading { margin: 0; font-size: 16px; color: var(--ink-2); min-height: 1.45em; }
 
 /* Guided tour */
-.tour { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 8px; padding: 8px 10px 8px 12px; border-radius: 8px; background: #efeee8; }
-.tour-text { flex: 1 1 320px; min-width: 0; margin: 0; font-size: 14px; line-height: 1.4; color: var(--ink-2); }
-.tour-text strong { color: var(--ink); font-weight: 650; }
-.tour-count { margin-right: 8px; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+/* The bar floats at the top of the window, so it stays in view while the page scrolls and
+   never pushes the charts around. */
+.tour {
+  position: fixed;
+  z-index: 30;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1000px, calc(100vw - 24px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 12px;
+  background: var(--ink);
+  box-shadow: 0 8px 28px rgba(11, 11, 11, 0.28);
+}
+.tour-text { flex: 1 1 320px; min-width: 0; margin: 0; font-size: 14.5px; line-height: 1.4; color: #dddcd5; }
+.tour-text strong { color: #fff; font-weight: 650; }
+.tour-count { margin-right: 8px; font-size: 12px; color: #a9a89f; font-variant-numeric: tabular-nums; }
 .tour-nav { display: flex; gap: 6px; }
 .tour-start, .tour-nav button {
   height: 28px;
@@ -129,9 +147,14 @@ legend, .search label {
   white-space: nowrap;
   cursor: pointer;
 }
-.tour-start:hover, .tour-nav button:hover { background: #f0efea; }
-.tour-start:focus-visible, .tour-nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.tour-nav button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+.tour-start { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 600; }
+.tour-start:hover { background: #33322e; }
+.tour-start:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tour-nav button { background: transparent; border-color: rgba(255, 255, 255, 0.4); color: #fff; }
+.tour-nav button:hover { background: rgba(255, 255, 255, 0.14); }
+.tour-nav button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tour-nav button.primary { background: #fff; border-color: #fff; color: var(--ink); font-weight: 600; }
+.tour-nav button.primary:hover { background: #e9e8e3; }
 .tour-nav button:disabled { opacity: 0.4; cursor: default; }
 .hint { position: absolute; left: 0; bottom: 0; margin: 0; font-size: 11.5px; line-height: 1.35; color: var(--ink-3); pointer-events: none; }
 .reading strong { color: var(--ink); font-weight: 650; }
@@ -299,6 +322,22 @@ legend, .search label {
 .tryit button:hover { background: #f0efea; }
 .tryit button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tryit button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* Largest cities */
+.cities { margin-top: 14px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.cities h2 { margin: 0; font-size: 16px; line-height: 1.3; }
+.cities-note { margin: 2px 0 4px; max-width: 120ch; font-size: 12.5px; color: var(--ink-2); }
+#swarm-svg { display: block; width: 100%; overflow: visible; }
+.swarm-dot { stroke: var(--surface); stroke-width: 0.8; }
+.swarm-row-label { font-size: 12.5px; font-weight: 650; fill: var(--ink); }
+.swarm-row-note { font-size: 11.5px; fill: var(--ink-3); }
+.swarm-median { stroke: var(--ink-2); stroke-width: 1; }
+.swarm-play { stroke: var(--ink); stroke-width: 1.5; }
+.swarm-play-label { font-size: 12px; font-weight: 650; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.swarm-hover { fill: none; stroke: var(--ink); stroke-width: 1.5; pointer-events: none; }
+.swarm-selected { fill: none; stroke: var(--ink); stroke-width: 2; pointer-events: none; }
+.swarm-selected-label { font-size: 12px; font-weight: 650; fill: var(--ink); paint-order: stroke; stroke: rgba(255, 255, 255, 0.92); stroke-width: 3.5px; stroke-linejoin: round; pointer-events: none; }
+.link-ring { fill: none; stroke: var(--ink); stroke-width: 2; }
 
 /* Table */
 .table-section { margin-top: 14px; }

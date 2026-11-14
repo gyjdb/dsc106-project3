@@ -19,6 +19,8 @@ export function createTour({ data, api, places }) {
   const pct = (x) => `${Math.round(x * 100)}%`;
   const sharesAt = (scenario, year) => data.areaCurves(scenario, level).find((d) => d.year === year);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const scrollTo = (selector, block) => document.querySelector(selector).scrollIntoView({ block, behavior: reducedMotion ? "auto" : "smooth" });
+  const showMap = () => scrollTo(".map-col", "nearest");
 
   const steps = [
     {
@@ -29,6 +31,7 @@ export function createTour({ data, api, places }) {
         api.setScenario(MIDDLE);
         if (reducedMotion) api.setYear(2050);
         else api.playRange(2000, 2050);
+        showMap();
       },
     },
     {
@@ -46,6 +49,7 @@ export function createTour({ data, api, places }) {
         api.setScenario(MIDDLE);
         api.setYear(last);
         api.setPlace(places.arctic);
+        showMap();
       },
     },
     {
@@ -60,6 +64,7 @@ export function createTour({ data, api, places }) {
         api.setScenario(MIDDLE);
         api.setYear(last);
         api.setPlace(places.atlantic);
+        showMap();
       },
     },
     {
@@ -73,6 +78,22 @@ export function createTour({ data, api, places }) {
         api.setLevel(level);
         api.setScenario(LOW);
         api.setYear(last);
+        showMap();
+      },
+    },
+    {
+      title: "Northern cities go first.",
+      body: () => {
+        const [high, , tropics] = api.cityMedians();
+        const intro = "The 300 largest cities line up by arrival year, in rows by latitude.";
+        if (high === null || tropics === null) return intro;
+        return `${intro} High-latitude cities reach ${lv} around ${high}, tropical cities around ${tropics}.`;
+      },
+      apply: () => {
+        api.setLevel(level);
+        api.setScenario(MIDDLE);
+        api.setYear(last);
+        scrollTo(".cities", "center");
       },
     },
     {
@@ -82,6 +103,7 @@ export function createTour({ data, api, places }) {
         api.setLevel(level);
         api.setScenario(MIDDLE);
         api.setYear(last);
+        scrollTo(".masthead", "start");
       },
     },
   ];
@@ -111,8 +133,6 @@ export function createTour({ data, api, places }) {
   startBtn.addEventListener("click", () => {
     show(0);
     next.focus({ preventScroll: true });
-    // The tour bar pushes the map down, so bring the timeline back into view if it left.
-    document.querySelector(".timeline-row").scrollIntoView({ block: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
   });
   back.addEventListener("click", () => show(current - 1));
   next.addEventListener("click", () => {
