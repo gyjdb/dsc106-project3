@@ -14,8 +14,9 @@ Matthew Ramos.
 
 - **A guess first.** The page asks when you think the warming level reaches your place, then
   shows the models' answer next to your guess.
-- **A world map of arrival years**, one block per 2.5° grid cell, with a timeline that plays
-  the arrivals forward and charts the share of land and ocean reached.
+- **A world map of arrival years**, one block per 2.5° grid cell, striped where the climate
+  models split on whether a place arrives at all, with a timeline that plays the arrivals
+  forward and charts the share of land and ocean reached.
 - **A panel for any place**: the median arrival year, your age in that year, what the
   emissions scenario changes, the warming curves, and one dot for each climate model.
 - **A dot plot of the 300 largest cities**, in rows by latitude, linked to the map.

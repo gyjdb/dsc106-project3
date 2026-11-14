@@ -57,7 +57,7 @@ export function createTour({ data, api, places }) {
       body: () => {
         const a = data.placeArrival(MIDDLE, level, places.atlantic.cell);
         if (a.nReached === a.nModel) return "South of Greenland, the ocean warms far more slowly than the land around it.";
-        return `South of Greenland, only ${a.nReached} of ${a.nModel} models reach ${lv} and stay there by ${last}.`;
+        return `South of Greenland, only ${a.nReached} of ${a.nModel} models reach ${lv} and stay there by ${last}. Stripes on the map mark places where the models split more evenly.`;
       },
       apply: () => {
         api.setLevel(level);
