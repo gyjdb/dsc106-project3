@@ -30,6 +30,7 @@ function check(name, ok, detail = "") {
   check("the panel asks for a guess before showing the answer", gate.open && gate.bodyHidden && /San Diego/.test(gate.q) && (await page.locator("#guess-reveal").isDisabled()), gate.q);
   await page.locator("#guess-year").focus();
   for (let i = 0; i < 25; i++) await page.keyboard.press("ArrowRight"); // 2045 to 2070
+  await page.locator("#guess-birth").fill("1999");
   const shown = await page.locator("#guess-out").innerText();
   await page.locator("#guess-reveal").click();
   await page.waitForTimeout(600); // the headline number rolls from the guess to the answer
@@ -37,6 +38,12 @@ function check(name, ok, detail = "") {
   const verdict = await page.locator("#guess-result").innerText();
   const afterGuess = await page.evaluate(() => ({ gateHidden: document.getElementById("guess").hidden, hero: document.getElementById("hero-year").textContent, marker: document.querySelector("#strip-svg .guess-label").textContent, lines: document.querySelectorAll("#line-svg path.s-line").length }));
   check("revealing compares the guess with the models", shown === "2070" && verdict.includes("You guessed 2070.") && verdict.includes(`${2070 - sdAnswer} years sooner`), verdict);
+  const lifeAfterGuess = await page.locator("#lifetime-text").innerText();
+  const heroAfterGuess = await page.locator("#hero-text").innerText();
+  const ends = await page.evaluate(() => [0, 3].map((sc) => window.viz.data.placeArrival(sc, 1, window.viz.state.place.cell).median));
+  check("the birth year given with the guess carries over", lifeAfterGuess.includes(`You would be ${sdAnswer - 1999}.`) && (await page.locator("#birth-year").inputValue()) === "1999", lifeAfterGuess);
+  check("the headline says what emissions change", heroAfterGuess.includes(`Emissions shift it by ${ends[0] - ends[1]} years: ${ends[1]} if very high, ${ends[0]} if low.`), heroAfterGuess);
+  await page.locator("#birth-year").fill("2005");
   check("the answer and the guess marker appear after the reveal", afterGuess.gateHidden && afterGuess.hero === String(sdAnswer) && afterGuess.marker === "your guess 2070" && afterGuess.lines === 4, JSON.stringify(afterGuess));
 
   // 1. Painted colors line up with the data: the pixel at every cell center must show that

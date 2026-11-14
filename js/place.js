@@ -132,6 +132,19 @@ export class PlacePanel {
       parts.push([a.nReached === 0 ? "no model reaches it and stays there. " : `only ${a.nReached} of ${a.nModel} models reach it and stay there. `, false]);
       parts.push([world !== null ? `The world average arrives in ${world}.` : "The world average does not arrive by 2090.", true]);
     }
+    // What the emissions path changes for this place: the two ends of the scenario range.
+    const low = data.placeArrival(0, level, place.cell).median;
+    const veryHigh = data.placeArrival(SCENARIOS.length - 1, level, place.cell).median;
+    if (low !== null && veryHigh !== null && Math.max(low, veryHigh) <= TODAY) {
+      parts.push([" It has already happened under every scenario.", false]);
+    } else if (low !== null && veryHigh !== null) {
+      const gap = low - veryHigh;
+      parts.push([gap >= 3 ? ` Emissions shift it by ${gap} years: ${veryHigh} if very high, ${low} if low.` : ` Emissions barely move it: ${veryHigh} if very high, ${low} if low.`, false]);
+    } else if (veryHigh !== null) {
+      parts.push([` Very high emissions bring it in ${veryHigh}; low emissions keep it away past ${data.lastYear}.`, false]);
+    } else if (low === null && a.median === null) {
+      parts.push([` Even very high emissions do not bring it by ${data.lastYear}.`, false]);
+    }
     const toNodes = (list) => list.map(([t, strong]) => (strong ? node("strong", "", t) : document.createTextNode(t)));
     this.heroText.replaceChildren(...toNodes(parts));
     this.lifetimeText.replaceChildren(...toNodes(lifetimeParts(a.median, birth, data.lastYear)));
@@ -413,7 +426,7 @@ export class PlacePanel {
     this.gGuess.attr("display", g ? null : "none");
     if (g) {
       const gx = g.year === null ? afterX : x(Math.max(g.year, X_DOMAIN[0]));
-      const flip = gx > width - M.right - 70;
+      const flip = width - gx < 100; // not enough room on the right for the label
       this.gGuess.select("line").attr("x1", gx).attr("x2", gx).attr("y1", 30).attr("y2", baseY);
       this.gGuess.select("circle").attr("cx", gx).attr("cy", 30);
       this.gGuess

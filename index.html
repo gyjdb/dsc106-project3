@@ -76,6 +76,11 @@
           <output class="guess-out empty" id="guess-out" for="guess-year">Drag to guess</output>
         </div>
         <div class="guess-scale" aria-hidden="true"><span>2000</span><span>2090, or not by then</span></div>
+        <div class="guess-birth">
+          <label for="guess-birth">Born in</label>
+          <input id="guess-birth" type="number" inputmode="numeric" min="1900" max="2026" step="1" value="2005">
+          <span>to see how old you would be</span>
+        </div>
         <div class="guess-actions">
           <button type="button" id="guess-reveal" class="primary" disabled>Reveal</button>
           <button type="button" id="guess-skip">Skip the guess</button>
@@ -94,7 +99,7 @@
           <span class="lifetime-text" id="lifetime-text" aria-live="polite"></span>
         </div>
         <div class="chart-title" id="line-title">Warming at this place</div>
-        <p class="chart-note">Warming compared with this place’s 1850–1900 average. Lines: median of the models, smoothed over 20 years. Band: middle 80% of models for the selected scenario. Dot: median arrival year.</p>
+        <p class="chart-note">Against this place’s 1850–1900 average. Lines: model median, smoothed over 20 years. Band: middle 80% of models. Dot: median arrival.</p>
         <div class="chart-wrap" id="line-wrap"><svg id="line-svg" role="img" aria-label="Line chart of warming over time at the selected place for each emissions scenario."></svg></div>
         <div class="chart-title" id="strip-title">When each climate model says it arrives</div>
         <p class="chart-note" id="strip-note"></p>

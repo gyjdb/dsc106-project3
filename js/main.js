@@ -366,13 +366,18 @@ async function init() {
   guessReveal.addEventListener("click", () => closeGuess(true));
   document.getElementById("guess-skip").addEventListener("click", () => closeGuess(false));
 
-  /* Birth year */
-  const birthInput = document.getElementById("birth-year");
-  state.birth = parseBirthYear(birthInput.value);
-  birthInput.addEventListener("input", () => {
-    state.birth = parseBirthYear(birthInput.value);
-    renderPlace();
-  });
+  /* Birth year: asked with the guess, and editable afterwards in the panel */
+  const birthInputs = [document.getElementById("birth-year"), document.getElementById("guess-birth")];
+  state.birth = parseBirthYear(birthInputs[0].value);
+  birthInputs.forEach((input) =>
+    input.addEventListener("input", () => {
+      state.birth = parseBirthYear(input.value);
+      birthInputs.forEach((other) => {
+        if (other !== input) other.value = input.value;
+      });
+      renderPlace();
+    })
+  );
 
   /* Search */
   const seen = new Map();

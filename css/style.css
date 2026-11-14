@@ -264,6 +264,9 @@ legend, .search label {
 .guess-out { flex: none; min-width: 116px; font-size: 22px; line-height: 1; font-weight: 700; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
 .guess-out.empty { font-size: 13px; font-weight: 400; color: var(--ink-3); }
 .guess-scale { display: flex; justify-content: space-between; margin-right: 128px; font-size: 11px; color: var(--ink-3); }
+.guess-birth { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+.guess-birth input { width: 68px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); font: inherit; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.guess-birth input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .guess-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
 .guess-actions button { height: 32px; padding: 0 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
 .guess-actions button:hover { background: #f0efea; }
