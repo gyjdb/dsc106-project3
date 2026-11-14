@@ -41,7 +41,7 @@ Careful consideration was taken when writing the text. The chart titles clearly 
 
 ## Development
 
-Ethan completed most of the page. This included creating the data pipeline (119 model runs ~3.5GB of data), checking against IPCC numbers, creating 6 exploratory charts, creating the D3 prototype, automated tests and adding the extra features (guided tour, birth year layer, city dot plot, guessing game). Claude was used throughout. The results were then checked and corrected. This is in line with the ethos of this course as we are encouraged to use AI. The checkpoint video was created as a team. Mayur and Matthew [tested the page, gave feedback on the design & text]. This write up was completed by us.
+Ethan completed most of the page. This included creating the data pipeline (119 model runs ~3.5GB of data), checking against IPCC numbers, creating 6 exploratory charts, creating the D3 prototype, automated tests and adding the extra features (guided tour, birth year layer, city dot plot, guessing game). Claude was used throughout. The results were then checked and corrected. This is in line with the ethos of this course as we are encouraged to use AI. The checkpoint video was created as a team. Mayur and Matthew tested the page and gave feedback on the design and text. This write up was completed by us.
 
 Overall this project took around 30 person hours to complete. The final page has ~2350 lines of JavaScript and 900 lines of Python. The main challenges were deciding what to consider as reaching the target (changed twice), getting the map to match the exact numbers from the panel, downloading and regridding the model data, and avoiding overlapping labels.
 

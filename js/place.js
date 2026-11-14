@@ -26,6 +26,7 @@ export class PlacePanel {
     // The band holds the 10th to 90th percentile of the models: say that as a count.
     document.getElementById("line-note").textContent = `Against this place’s 1850–1900 average. Lines: model median, smoothed over 20 years. Band: where about ${Math.round(data.nModel * 0.8)} of the ${data.nModel} models fall. Dot: median arrival.`;
     this.heroText = document.getElementById("hero-text");
+    this.heroRange = document.getElementById("hero-range");
     this.lifetimeText = document.getElementById("lifetime-text");
     this.lineWrap = document.getElementById("line-wrap");
     this.stripWrap = document.getElementById("strip-wrap");
@@ -113,14 +114,6 @@ export class PlacePanel {
     const parts = [];
     if (a.median !== null) {
       parts.push(["is when this place’s 20-year average reaches ", false], [fmtLevel(lv), true], [` and stays there (median of ${a.nModel} models, ${scen.code}). `, false]);
-      if (a.nReached > 0) {
-        parts.push(
-          a.earliest === a.latest
-            ? [`Every model that arrives says ${a.earliest}. `, false]
-            : [`Models range from ${a.earliest} to ${a.latest}. `, false]
-        );
-      }
-      if (a.nReached < a.nModel) parts.push([`${a.nModel - a.nReached} of ${a.nModel} do not arrive by 2090. `, false]);
       if (world !== null) {
         const gap = world - a.median;
         if (gap === 0) parts.push(["Same year as the world average.", true]);
@@ -151,6 +144,15 @@ export class PlacePanel {
     }
     const toNodes = (list) => list.map(([t, strong]) => (strong ? node("strong", "", t) : document.createTextNode(t)));
     this.heroText.replaceChildren(...toNodes(parts));
+    const spread = a.nReached === 0
+      ? `No model arrives by ${data.lastYear}.`
+      : a.earliest === a.latest
+        ? `Model arrivals: ${a.earliest}.`
+        : `Model arrivals: ${a.earliest} to ${a.latest}.`;
+    this.heroRange.replaceChildren(
+      node("strong", "", spread),
+      document.createTextNode(` ${a.nReached} of ${a.nModel} models arrive by ${data.lastYear}.`)
+    );
     this.lifetimeText.replaceChildren(...toNodes(lifetimeParts(a.median, birth, data.lastYear, a.earliest, a.latest)));
 
     // How the reader's own guess compares with the models
@@ -159,7 +161,9 @@ export class PlacePanel {
     if (g) {
       const said = g.year === null ? `not by ${data.lastYear}` : g.year;
       let verdict;
-      if (g.year === null && a.median === null) verdict = "The models agree.";
+      if (g.year === null && a.median === null) verdict = a.nReached === 0
+        ? `All ${a.nModel} models say it does not arrive by ${data.lastYear}.`
+        : `Most models say it does not arrive by ${data.lastYear}; ${a.nReached} of ${a.nModel} do arrive.`;
       else if (a.median === null) verdict = `Most models say it does not arrive by ${data.lastYear}.`;
       else if (g.year === null) verdict = `The models say ${a.median}.`;
       else if (g.year === a.median) verdict = "That is exactly the models’ median.";
