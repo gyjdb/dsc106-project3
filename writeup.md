@@ -1,62 +1,134 @@
-# Project 3 Write-up: When does +2 °C arrive where you live?
+# Project 3 Write-up: When Does +2°C Arrive Where You Live?
 
 **Team:** The Avengineers (Ethan Cai, Mayur Nookala, Matthew Ramos)
-**Live page:** https://gyjdb.github.io/dsc106-project3/
+
+**Live Page:** https://gyjdb.github.io/dsc106-project3/
 
 ## Motivation
 
-Whilst most people will know that we are trying to keep warming below +2 degrees globally, this is an average value. In a medium case scenario (SSP2-4.5), the world will reach +2 degrees in 2056. However, the Arctic reached +2 degrees around 2005, the tropics will reach it in 2063 and some areas of the North Atlantic never reach this by 2090. We wanted to put this global number into something people could relate to. What is the date your location will reach +2 degrees?
+Most people know that global warming is a big problem and that we are trying to keep temperatures from rising more than 2°C. However, this number is just a global average. Different parts of the world will reach 2°C of warming at different times. For example, under the medium emissions scenario (SSP2-4.5), the world is expected to reach 2°C in 2056. However, the Arctic already reached it around 2005, while tropical regions are expected to reach it in 2063. Some places in the North Atlantic might not even reach it by 2090.
 
-We also wanted to be realistic with the confidence of this information. As climate models can vary by decades for one city, we did not want to give one confident date. A previous DSC 106 project looked at the first year each location reaches +2 degrees (A World on Fire, Spring 2026). This included a chart to show what year you were born in. However this only used one model and a 2015-2034 baseline. We have used 17 models to show where there is disagreement. It also shows the warming from the pre-industrial baseline (1850-1900), and only counts a location once it reaches the target and stays there. Finally, it tells you how old you would be.
+We wanted to make this information more personal by letting people see when their own city or location might reach 2°C of warming, as well as wanting to show that climate predictions are not always exact. Different climate models can predict very different years for the same city. Instead of only showing one year, we used 17 climate models so users could see how much the predictions vary.
+
+A previous DSC 106 project called A World on Fire had a similar idea, but it only used one climate model and a different temperature baseline. We wanted to improve on this by using more models, comparing temperatures to the pre-industrial period (1850–1900), and only counting a location as reaching 2°C if it stays above that temperature. We also added a feature that tells users how old they would be when their location reaches that level.
 
 ## Design Rationale
 
 ### Data & Transformations
 
-The data we used was the monthly near surface temperature from the CMIP6 dataset (historical run and 4 SSP scenarios). We only used the 25 models that had data for all 5 experiments, and fell within the likely range of transient climate response given by the IPCC. From these we picked 17 models with no two from the same institution. This removes the hot models (Hausfather et al. 2022) which are warmer than the evidence suggests. These would have caused locations to reach the target too early. All models have been regridded to the same grid (2.5 degree resolution), and their temperature has been calculated relative to their mean temperature between 1850-1900. They have also been smoothed with a 20 year running mean, following the IPCC convention. Our median values between 2081-2100 are very similar to the best estimates given by the IPCC (e.g. +2.60 vs +2.7 degrees in SSP2-4.5). We have confidence in our pipeline.
+For our project, we used monthly temperature data from the CMIP6 climate dataset. This included historical temperature data and predictions from four different emissions scenarios.
 
-The main challenge we faced with the transformations was deciding what to consider as reaching the target. In our initial version we simply used the first year the cell reached the target. However we noticed individual grid cells varied by several degrees across decades and so areas were reaching the target during short periods of warming. For example one cell in Antarctica reached +3 degrees in the 1860s for one model. So we changed the criteria to only consider locations that reached the target and stayed above it for at least 20 years. We also chose to consider temperature rather than rainfall as almost all (99%) of the earth has the same direction of warming across models, whereas only half of the earth has agreement on rainfall.
+We started with 25 climate models that had data for all five experiments and were within the IPCC's likely range for climate response. We then selected 17 models from different institutions so we would not have multiple models from the same institution. We also avoided models that predicted unusually high warming, since these could make locations appear to reach 2°C earlier than expected.
+
+To make the data consistent, we put all the models on the same 2.5-degree grid. We calculated warming by comparing temperatures to the average between 1850 and 1900. We also used a 20-year running average to smooth out short-term changes in temperature.
+
+We compared our results to the IPCC's estimates and found that they were very similar. For example, our predicted warming for 2081–2100 under SSP2-4.5 was 2.60°C, compared to the IPCC's estimate of 2.7°C.
+
+One challenge was deciding when a location should count as reaching 2°C. At first, we used the first year a location reached that temperature. However, we noticed that some places would briefly reach the target and then fall below it again. One model even showed a location in Antarctica reaching 3°C in the 1860s.
+
+To fix this, we changed our method so that a location had to stay above the target for at least 20 years. This helped us avoid counting temporary temperature increases.
+
+We also decided to focus on temperature instead of rainfall because climate models agree much more on temperature changes. Around 99% of the Earth is expected to warm across the models, while there is much less agreement on rainfall changes.
 
 ### Visual Encoding
 
-The main visual is a world map showing each 2.5 degree cell as a block with the colour depending on the median year it reached the target. We chose to use the year reached rather than the warming in a particular year. This gives a single visual to show the timeline. We chose to use blocks for each cell as in our initial version we had a smooth surface which meant the map did not match the numbers shown (San Diego reached the target in 2043 according to the panel, however in the map it was still grey in 2045). We chose to use the Equal Earth projection instead of Mercator to ensure the coloured area shows the correct percentage of land and ocean as stated. This also prevents the Arctic appearing larger than it actually is. We tried a version with 16 mini maps (4 levels x 4 scenarios). However these were too small to find the location you were looking for so we went with one interactive map.
+Our main visualization is an interactive world map. Each block represents a 2.5-degree grid cell, and its color shows approximately when that location reaches the selected warming target.
 
-Below the map we have included a timeline to show the percentage of land and ocean that have reached the target. We chose to include this as a timeline rather than a simple slider so users can see land reaches the target before ocean (79% vs 10% by 2050) without having to interact with anything. For the selected location we have included each model's individual year reached as dots. Models disagree by decades for one city (San Diego: 2023 to 2078). Research shows discrete dots communicate uncertainty better than ranges (Kay et al. 2016). If there is disagreement about whether a location reaches the target the map will have striped colours. If we had only used the median value this would not have been shown. A similar map to ours (Mora et al. 2013) was criticised for this (Hawkins et al. 2014). Finally, the city dot plot shows the 300 largest cities in rows based on their latitude band. This shows that high latitude cities reach the target around 29 years earlier than tropical cities.
+We chose to show the year a location reaches the target instead of its temperature during a specific year. This makes it easier to compare which parts of the world warm up first.
 
-### Colour
+Originally, we tried making the map look smoother, but this caused problems because the colors did not always match the exact years shown in the information panel. For example, San Diego could be shown as reaching 2°C in 2043, but the map would still show it as not reaching the target in 2045. Using individual blocks fixed this problem.
 
-We have divided the years reached into 5 sequential classes (dark red for the earliest to golden yellow for the latest). This makes the locations that reach the target the earliest stick out. We have used classes rather than a continuous colour scale as we can name them and separate them in the legend. As there is a large difference between models (decades) we do not want to use a fine scale as this would imply a higher accuracy than the data has. Grey is outside of the scale so it does not appear as another class. We have tested the colour palette using a simulation for red/green colour blind users and changed the last class to golden yellow as it was too similar to the grey. The scenario lines have been coloured from blue (low emissions) to dark red (very high). Each line has a label at the end.
+We also used the Equal Earth projection instead of Mercator because it represents the sizes of different regions more accurately. This is especially important for places like the Arctic, which look much larger on Mercator maps.
+
+At first, we considered showing 16 smaller maps for all the scenarios and warming levels. However, the maps were too small, and it was difficult for users to find their location. We decided that one larger interactive map would be easier to use.
+
+Below the map, we added a timeline showing the percentage of land and ocean that have reached the warming target. This helps users see that land warms faster than oceans. For example, by 2050, around 79% of land reaches 2°C compared to only 10% of the ocean.
+
+We also added a dot plot showing the predictions from all 17 climate models for a selected location. For San Diego, the models predict years ranging from 2023 to 2078. Showing each model as a separate dot helps users understand that the predictions have a lot of uncertainty.
+
+When models disagree on whether a location will reach the target, we use striped colors on the map to show that disagreement.
+
+Finally, we added a chart comparing the 300 largest cities based on their latitude. This shows that cities at higher latitudes tend to reach the warming target around 29 years earlier than cities near the tropics.
+
+### Color
+
+We used five colors to represent different time periods when locations reach the warming target. The colors go from dark red for locations that warm up earliest to golden yellow for locations that warm up later.
+
+We wanted the areas warming up the fastest to stand out. We also used separate color categories instead of a smooth gradient because the climate models can disagree by decades. Using too many colors might make the predictions look more exact than they really are.
+
+Grey represents locations that have not reached the target, so it is separate from the other colors.
+
+We also tested our colors to see how they would look for people with red-green color blindness. We changed the last color to golden yellow because the original color looked too similar to grey.
+
+For the different emissions scenarios, we used blue for lower emissions and dark red for very high emissions. We also labeled the lines to make the chart easier to understand.
 
 ### Interactivity
 
-The page starts with a guessing game to help users remember the data (those who guess first will remember the data better (Kim, Reinecke and Hullman 2017)). The user's guess is highlighted in the 17 model dots. Users can also input their birth year to find out how old they would be when it reaches the target. This makes the user think about what the number actually means rather than just 2043 (you'd be 38). We have also included controls to select the warming target and scenario. The timeline can be dragged and played. There is a search bar for cities, tooltips and a sortable table. We have also included a guided tour with 6 steps to help new users find their way around. We considered only using tooltips, but chose to let users click to pin a location so it stays selected while they change the warming level and scenario. We also considered showing the answer straight away, but asking for a guess first makes the result more memorable.
+We wanted users to do more than just look at a map, so we added several interactive features.
 
-There are a few patterns that we can only show using interactivity:
+The page starts with a guessing game where users try to predict when their location will reach 2°C. After they guess, they can compare their answer to the predictions from the 17 climate models. We thought this would make the information more interesting and memorable.
 
-- Your guess compared to the 17 models.
-- Cities moving into the 'not by 2090' block when the scenario is set to low emissions (177 cities out of 300 never reach the target in the low scenario).
-- Land fills in much quicker than ocean.
+Users can also enter their birth year to see how old they would be when their location reaches the target. For example, instead of only seeing that San Diego reaches 2°C around 2043, someone can see that they would be 38 years old.
 
-Careful consideration was taken when writing the text. The chart titles clearly tell the user what the findings are (The 17 models span 55 years: 2023 to 2078). The headline clearly states the approximate year (+2 degrees around 2043). We have also made sure to state how many models have reached the target (9 of 17 models) rather than giving a probability as the models are related and not equal probability samples.
+We also added controls that let users change the warming target and emissions scenario. The timeline can be dragged or played as an animation so users can watch different parts of the world reach the target over time.
+
+Other features include a city search bar, tooltips, a table of the 300 largest cities, and a six-step guided tour for first-time users.
+
+We also made it possible to click on a location and keep it selected while changing the scenario or warming target. This is helpful because users do not have to keep searching for their city.
+
+Some interesting patterns become easier to see through these interactions:
+
+- Users can compare their guesses with the climate model predictions.
+- Under the low emissions scenario, 177 out of the 300 largest cities do not reach the target by 2090.
+- Users can watch how land reaches the warming target much faster than the ocean.
+
+We also tried to make our chart titles explain the main findings. For example, instead of giving a general title, we show that the 17 models span 55 years for San Diego.
+
+We avoided describing the number of models as a probability because the models are not completely independent. Instead, we show statements like "9 of 17 models" so users understand what the number actually means.
 
 ## Development
 
-Ethan completed most of the page. This included creating the data pipeline (119 model runs ~3.5GB of data), checking against IPCC numbers, creating 6 exploratory charts, creating the D3 prototype, automated tests and adding the extra features (guided tour, birth year layer, city dot plot, guessing game). Claude was used throughout. The results were then checked and corrected. This is in line with the ethos of this course as we are encouraged to use AI. The checkpoint video was created as a team. Mayur and Matthew tested the page and gave feedback on the design and text. This write up was completed by us.
+Ethan worked on most of the website and data processing. This included downloading and processing around 3.5GB of climate data from 119 model runs, comparing results to IPCC estimates, creating six exploratory charts, building the D3 map, and adding interactive features.
 
-Overall this project took around 30 person hours to complete. The final page has ~2350 lines of JavaScript and 900 lines of Python. The main challenges were deciding what to consider as reaching the target (changed twice), getting the map to match the exact numbers from the panel, downloading and regridding the model data, and avoiding overlapping labels.
+He also worked on the guessing game, guided tour, birth year feature, and city comparison chart.
 
-We have tested our work thoroughly. We have 56 automated tests to check the page works in Chrome, Safari and Firefox. We have checked the colours on the map match the data for 8580 grid cells. We have also checked the numbers on the page match the Python analysis. We also checked the regridding works correctly using fake data.
+Matthew added and changed several features to make the website more user friendly. He added the line in the location panel that shows the range of years across the models, a note that years after 2070 are less certain, and a link from the website to this write-up. After testing the site, he found parts that were confusing or hard to use and made changes using Claude:
+
+- When you picked a city from the search bar, buttons, table, or city chart, it was hard to find on the map. Now rings pulse out from the city so it is easy to spot.
+- There was no easy way to go back to the starting view, so he added a Reset view button above the map. It also brings back the guessing game.
+- The timeline did not look like something you could drag, so it now has a slider bar and knob.
+- The charts in the location panel now move with the timeline, and clicking on any chart jumps the map to that year.
+- The city search used to show a long list of every city. He replaced it with a dropdown that shows a few matches and also lets you search by country.
+- He changed the guided tour so each step asks a question, and shortened the text on the page so there is less to read.
+
+Claude was used throughout development to help with coding and other parts of the project. However, the results were checked and corrected when needed.
+
+As a team, we worked together on the checkpoint video. Mayur and Matthew also tested the website and gave feedback on the design, wording, and overall user experience. We worked together on the final write-up.
+
+Overall, the project took about 30 person-hours to complete. The final website contains around 2,580 lines of JavaScript and 900 lines of Python.
+
+Some of the biggest challenges were figuring out when a location should count as reaching the target, making sure the map colors matched the data, processing the climate models, and fixing labels that overlapped.
+
+We also spent time testing our website. We created 56 automated tests to check that the page works in Chrome, Safari, and Firefox. We checked that the map colors matched the data for all 8,580 grid cells and that the numbers shown on the website matched our Python results.
+
+We also tested the regridding process using fake data to make sure it worked correctly.
 
 ## Limitations & Future Work
 
-Each grid cell is ~280km tall so the year shown for a city is actually the year for the cell. Everything including past years is from the model. Any locations reaching the target after ~2070 have a shorter period of staying above the target as the data stops at 2099. The page shows the absolute warming. High latitudes are leading. However, if you look at the warming relative to normal annual variations the tropics will be the first to move out of their familiar climate (Mahlstein et al. 2011). This has been noted on the page but not shown on the map. The page has not been manually tested on a phone. A future improvement would be to have a single view showing all 4 scenarios for the selected location. Currently we only have a sentence describing this.
+Our project has a few limitations.
 
-## References
+First, each grid cell is around 280 km tall, so the year shown for a city is actually based on the larger grid cell it belongs to. This means the results are not perfectly accurate for every individual city.
 
-- IPCC (2021). Climate Change 2021: The Physical Science Basis, Summary for Policymakers. [doi:10.1017/9781009157896.001](https://doi.org/10.1017/9781009157896.001)
-- Hausfather, Marvel, Schmidt, Nielsen-Gammon and Zelinka (2022). Climate simulations: recognize the "hot model" problem. Nature. [doi:10.1038/d41586-022-01192-2](https://doi.org/10.1038/d41586-022-01192-2)
-- Mora et al. (2013). The projected timing of climate departure from recent variability. Nature. [doi:10.1038/nature12540](https://doi.org/10.1038/nature12540)
-- Hawkins et al. (2014). Uncertainties in the timing of unprecedented climates. Nature. [doi:10.1038/nature13523](https://doi.org/10.1038/nature13523)
-- Mahlstein, Knutti, Solomon and Portmann (2011). Early onset of significant local warming in low latitude countries. Environmental Research Letters. [doi:10.1088/1748-9326/6/3/034009](https://doi.org/10.1088/1748-9326/6/3/034009)
-- Kay, Kola, Hullman and Munson (2016). When (ish) is my bus? CHI 2016. [doi:10.1145/2858036.2858558](https://doi.org/10.1145/2858036.2858558)
-- Kim, Reinecke and Hullman (2017). Explaining the gap: visualizing one's predictions improves recall and comprehension of data. CHI 2017. [doi:10.1145/3025453.3025592](https://doi.org/10.1145/3025453.3025592)
+Another limitation is that all the temperature values, including past years, come from climate models rather than direct observations.
+
+Also, because our dataset ends in 2099, locations that reach the warming target after around 2070 cannot be checked for the full 20 years above the target.
+
+Our map also focuses on absolute warming. It shows that high-latitude regions are warming faster, but it does not show how unusual the warming is compared to a location's normal temperature changes. For example, tropical regions might experience more unusual conditions earlier because their temperatures usually do not vary as much.
+
+We explain this on the website, but it is not directly shown on the map.
+
+We also have not manually tested the website on a phone, so the mobile experience could still be improved.
+
+In the future, we would like to add a feature that shows all four emissions scenarios for one selected location at the same time. Right now, the website only describes this comparison in a sentence. Having a chart would make it easier for users to compare how different emissions levels could affect their city.
+
+Overall, our goal was to help people understand how global warming could affect their own location and show that climate predictions can vary depending on the model and emissions scenario.
