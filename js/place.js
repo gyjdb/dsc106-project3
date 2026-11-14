@@ -6,7 +6,8 @@ const d3 = window.d3;
 
 const X_DOMAIN = [1960, 2090];
 const AGE_ROW = 13; // a second row of axis labels: the reader's age in those years
-const LINE_H = 295;
+const LINE_H = 262;
+const MOVE_MS = 350; // how long lines and numbers take to move to a new state
 const STRIP_H = 108;
 const M = { top: 12, right: 100, bottom: 20, left: 32 };
 
@@ -26,6 +27,7 @@ export class PlacePanel {
     this.lineWrap = document.getElementById("line-wrap");
     this.stripWrap = document.getElementById("strip-wrap");
     this.stripTitle = document.getElementById("strip-title");
+    this.motion = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     this.line = d3.select("#line-svg");
     this.gGrid = this.line.append("g").attr("class", "chart-axis");
@@ -76,7 +78,20 @@ export class PlacePanel {
     this.nameEl.textContent = place.name;
     this.subEl.textContent = place.sub;
     this.heroYear.classList.toggle("long", a.median === null);
-    this.heroYear.textContent = a.median === null ? "Not by 2090" : a.median;
+    const before = Number(this.heroYear.textContent);
+    if (this.motion && a.median !== null && Number.isInteger(before) && before !== a.median) {
+      const step = d3.interpolateRound(before, a.median);
+      d3.select(this.heroYear)
+        .interrupt()
+        .transition()
+        .duration(MOVE_MS)
+        .tween("text", () => (t) => {
+          this.heroYear.textContent = step(t);
+        });
+    } else {
+      d3.select(this.heroYear).interrupt();
+      this.heroYear.textContent = a.median === null ? "Not by 2090" : a.median;
+    }
 
     const world = data.worldArrival(scenario, level);
     const parts = [];
@@ -162,8 +177,13 @@ export class PlacePanel {
       .y0((d, i) => y(lo[i].v))
       .y1((d, i) => y(hi[i].v))
       .curve(d3.curveMonotoneX);
-    this.band.attr("d", band(lo)).attr("fill", SCENARIOS[scenario].color);
-    this.worldPath.attr("d", line(world));
+    // Shapes glide to their new form; the first draw and reduced-motion readers get it at once.
+    const move = (sel, name, value) => {
+      if (this.motion && sel.attr(name)) sel.interrupt(name).transition(name).duration(MOVE_MS).attr(name, value);
+      else sel.interrupt(name).attr(name, value);
+    };
+    move(this.band.attr("fill", SCENARIOS[scenario].color), "d", band(lo));
+    move(this.worldPath, "d", line(world));
 
     const order = d3.range(SCENARIOS.length).sort((a, b) => (a === scenario) - (b === scenario));
     this.gLines
@@ -173,17 +193,33 @@ export class PlacePanel {
       .attr("class", "s-line")
       .attr("stroke", (s) => SCENARIOS[s].color)
       .attr("stroke-width", (s) => (s === scenario ? 2.5 : 1.25))
-      .attr("d", (s) => line(all[s]))
+      .each(function (s) {
+        move(d3.select(this), "d", line(all[s]));
+      })
       .order();
 
-    this.levelLine.attr("x1", M.left).attr("x2", width - M.right).attr("y1", y(lv)).attr("y2", y(lv));
-    this.levelText.attr("x", M.left + 4).attr("y", y(lv) - 4).text(fmtLevel(lv));
+    this.levelLine.attr("x1", M.left).attr("x2", width - M.right);
+    move(this.levelLine, "y1", y(lv));
+    move(this.levelLine, "y2", y(lv));
+    this.levelText.attr("x", M.left + 4).text(fmtLevel(lv));
+    move(this.levelText, "y", y(lv) - 4);
 
     const a = this.summary;
     if (a.median !== null) {
       const ax = x(Math.max(a.median, X_DOMAIN[0]));
-      this.arrivalDot.attr("display", null).attr("cx", ax).attr("cy", y(lv));
-      this.dropLine.attr("display", null).attr("x1", ax).attr("x2", ax).attr("y1", y(lv)).attr("y2", yb);
+      const wasHidden = this.arrivalDot.attr("display") === "none";
+      this.arrivalDot.attr("display", null);
+      this.dropLine.attr("display", null).attr("y2", yb);
+      if (wasHidden) {
+        this.arrivalDot.interrupt("cx").interrupt("cy").attr("cx", ax).attr("cy", y(lv));
+        this.dropLine.interrupt("x1").interrupt("x2").interrupt("y1").attr("x1", ax).attr("x2", ax).attr("y1", y(lv));
+      } else {
+        move(this.arrivalDot, "cx", ax);
+        move(this.arrivalDot, "cy", y(lv));
+        move(this.dropLine, "x1", ax);
+        move(this.dropLine, "x2", ax);
+        move(this.dropLine, "y1", y(lv));
+      }
     } else {
       this.arrivalDot.attr("display", "none");
       this.dropLine.attr("display", "none");
