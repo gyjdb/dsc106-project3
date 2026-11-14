@@ -151,7 +151,7 @@ export class PlacePanel {
     }
     const toNodes = (list) => list.map(([t, strong]) => (strong ? node("strong", "", t) : document.createTextNode(t)));
     this.heroText.replaceChildren(...toNodes(parts));
-    this.lifetimeText.replaceChildren(...toNodes(lifetimeParts(a.median, birth, data.lastYear)));
+    this.lifetimeText.replaceChildren(...toNodes(lifetimeParts(a.median, birth, data.lastYear, a.earliest, a.latest)));
 
     // How the reader's own guess compares with the models
     const g = this._guessFor({ place, level, scenario, guess });
@@ -368,7 +368,7 @@ export class PlacePanel {
     if (a.nReached === 0) this.stripTitle.textContent = `No model has ${lvText} arriving here by ${this.data.lastYear}`;
     else if (a.nReached < a.nModel) this.stripTitle.textContent = `${a.nReached} of ${a.nModel} models have ${lvText} arriving here by ${this.data.lastYear}`;
     else if (a.earliest === a.latest) this.stripTitle.textContent = `All ${a.nModel} models say ${a.earliest}`;
-    else this.stripTitle.textContent = `The ${a.nModel} models disagree by ${a.latest - a.earliest} years`;
+    else this.stripTitle.textContent = `The ${a.nModel} models span ${a.latest - a.earliest} years: ${a.earliest} to ${a.latest}`;
     this.stripNote.textContent = `One dot per climate model, at the year it says ${lvText} arrives and stays. Bar: the median.`;
 
     this.stripBase.attr("x1", M.left).attr("x2", width - M.right).attr("y1", baseY).attr("y2", baseY);
@@ -430,7 +430,9 @@ export class PlacePanel {
     this.gGuess.attr("display", g ? null : "none");
     if (g) {
       const gx = g.year === null ? afterX : x(Math.max(g.year, X_DOMAIN[0]));
-      const flip = width - gx < 100; // not enough room on the right for the label
+      // The label goes on the side away from the median bar, where the dots are thinner.
+      const awayLeft = g.year !== null && a.median !== null && g.year < a.median && gx > 130;
+      const flip = awayLeft || width - gx < 100;
       this.gGuess.select("line").attr("x1", gx).attr("x2", gx).attr("y1", 30).attr("y2", baseY);
       this.gGuess.select("circle").attr("cx", gx).attr("cy", 30);
       this.gGuess

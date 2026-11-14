@@ -57,7 +57,7 @@ function check(name, ok, detail = "") {
   // from the edge).
   const align = await page.evaluate(async () => {
     const { data, map, state, binOf } = window.viz;
-    const BINS = ["#6b0f1a", "#b3261e", "#e4572e", "#f59e4c", "#fbd28a", "#edece8"].map((h) => window.d3.color(h));
+    const BINS = ["#6b0f1a", "#b3261e", "#e4572e", "#f59e4c", "#f6cd5a", "#edece8"].map((h) => window.d3.color(h));
     const codes = data.medianArrival(state.scenario, state.level);
     const stripes = data.splitStripes(state.scenario, state.level);
     const ctx = map.canvas.getContext("2d");
@@ -289,6 +289,9 @@ function check(name, ok, detail = "") {
   const sd = await page.evaluate(() => window.viz.data.placeArrival(1, 1, window.viz.data.cellOf(32.72, -117.15)).median);
   const life1 = await page.locator("#lifetime-text").innerText();
   check("default birth year gives an age", life1.includes(`You would be ${sd - 2005}.`) && life1.includes(`A child born today would be ${sd - 2026}.`), life1);
+  const sdRange = await page.evaluate(() => { const a = window.viz.data.placeArrival(1, 1, window.viz.data.cellOf(32.72, -117.15)); return [a.earliest, a.latest]; });
+  const stripTitle = await page.locator("#strip-title").innerText();
+  check("the age and the model strip both give the range across models", life1.includes(`Across the models: ${sdRange[0] - 2005} to ${sdRange[1] - 2005}.`) && stripTitle === `The 17 models span ${sdRange[1] - sdRange[0]} years: ${sdRange[0]} to ${sdRange[1]}`, `${life1} | ${stripTitle}`);
   await page.locator("#birth-year").fill("1990");
   const life2 = await page.locator("#lifetime-text").innerText();
   const ages = await page.evaluate(() => [...document.querySelectorAll("#line-svg .age-axis text")].map((t) => t.textContent));

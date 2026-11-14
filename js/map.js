@@ -9,7 +9,7 @@ export const BINS = [
   { label: "2026–2040", max: 2040, color: "#b3261e" },
   { label: "2041–2055", max: 2055, color: "#e4572e" },
   { label: "2056–2070", max: 2070, color: "#f59e4c" },
-  { label: "2071–2090", max: 2090, color: "#fbd28a" },
+  { label: "2071–2090", max: 2090, color: "#f6cd5a" }, // golden, so it cannot be mistaken for the gray
   { label: "Not by 2090", max: Infinity, color: "#edece8" },
 ];
 const NOT_YET = "#edece8";
