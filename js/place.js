@@ -6,9 +6,9 @@ const d3 = window.d3;
 
 const X_DOMAIN = [1960, 2090];
 const AGE_ROW = 13; // a second row of axis labels: the reader's age in those years
-const LINE_H = 262;
+const LINE_H = 236;
 const MOVE_MS = 350; // how long lines and numbers take to move to a new state
-const STRIP_H = 108;
+const STRIP_H = 98;
 const M = { top: 12, right: 100, bottom: 20, left: 32 };
 
 const fmtTemp = (v) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)} °C`;
@@ -27,6 +27,9 @@ export class PlacePanel {
     this.lineWrap = document.getElementById("line-wrap");
     this.stripWrap = document.getElementById("strip-wrap");
     this.stripTitle = document.getElementById("strip-title");
+    this.stripNote = document.getElementById("strip-note");
+    this.lineTitle = document.getElementById("line-title");
+    this.guessResult = document.getElementById("guess-result");
     this.motion = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     this.line = d3.select("#line-svg");
@@ -52,6 +55,10 @@ export class PlacePanel {
     this.stripMedian = this.strip.append("line").attr("class", "strip-median");
     this.stripMedianText = this.strip.append("text").attr("class", "strip-label strong");
     this.afterText = this.strip.append("text").attr("class", "strip-label").attr("text-anchor", "middle");
+    this.gGuess = this.strip.append("g").attr("display", "none");
+    this.gGuess.append("line").attr("class", "guess-line");
+    this.gGuess.append("circle").attr("class", "guess-dot").attr("r", 3.5);
+    this.gGuess.append("text").attr("class", "guess-label");
     this.gDots = this.strip.append("g");
     this.stripOverlay = this.strip.append("rect").attr("fill", "transparent");
 
@@ -69,7 +76,12 @@ export class PlacePanel {
     this._stripChart(state);
   }
 
-  _text({ place, level, scenario, birth }) {
+  /** The reader's guess, if it was made for the place, level and scenario now on show. */
+  _guessFor({ place, level, scenario, guess }) {
+    return guess && guess.cell === place.cell && guess.level === level && guess.scenario === scenario ? guess : null;
+  }
+
+  _text({ place, level, scenario, birth, guess }) {
     const { data } = this;
     const a = data.placeArrival(scenario, level, place.cell);
     this.summary = a;
@@ -123,6 +135,23 @@ export class PlacePanel {
     const toNodes = (list) => list.map(([t, strong]) => (strong ? node("strong", "", t) : document.createTextNode(t)));
     this.heroText.replaceChildren(...toNodes(parts));
     this.lifetimeText.replaceChildren(...toNodes(lifetimeParts(a.median, birth, data.lastYear)));
+
+    // How the reader's own guess compares with the models
+    const g = this._guessFor({ place, level, scenario, guess });
+    this.guessResult.hidden = !g;
+    if (g) {
+      const said = g.year === null ? `not by ${data.lastYear}` : g.year;
+      let verdict;
+      if (g.year === null && a.median === null) verdict = "The models agree.";
+      else if (a.median === null) verdict = `Most models say it does not arrive by ${data.lastYear}.`;
+      else if (g.year === null) verdict = `The models say ${a.median}.`;
+      else if (g.year === a.median) verdict = "That is exactly the models’ median.";
+      else {
+        const n = Math.abs(a.median - g.year);
+        verdict = `The models say ${n} year${n === 1 ? "" : "s"} ${a.median < g.year ? "sooner" : "later"}.`;
+      }
+      this.guessResult.replaceChildren(document.createTextNode(`You guessed ${said}. `), node("strong", "", verdict));
+    }
   }
 
   _lineChart({ place, level, scenario, birth }) {
@@ -137,6 +166,9 @@ export class PlacePanel {
     const hi = data.series(cell, scenario, "p90").filter(inRange);
     const world = data.worldSeries(scenario, "p50").filter(inRange);
     const lv = data.meta.levels[level];
+    const sel = all[scenario];
+    const nowPoint = sel.find((d) => d.year === 2025) || sel[sel.length - 1];
+    this.lineTitle.textContent = `${fmtTemp(nowPoint.v)} here today, ${fmtTemp(sel[sel.length - 1].v)} by ${data.lastYear} under ${SCENARIOS[scenario].code}`;
 
     // The axis depends only on the place and level, so switching scenario does not rescale it.
     const allHi = SCENARIOS.flatMap((_, s) => data.series(cell, s, "p90").filter(inRange).map((d) => d.v));
@@ -306,7 +338,7 @@ export class PlacePanel {
       });
   }
 
-  _stripChart({ level, scenario }) {
+  _stripChart({ place, level, scenario, guess }) {
     const { width } = this;
     const a = this.summary;
     const svg = this.strip;
@@ -315,7 +347,12 @@ export class PlacePanel {
     const baseY = STRIP_H - 20;
     const afterX = width - M.right + 38;
     const lvText = fmtLevel(this.data.meta.levels[level]);
-    this.stripTitle.textContent = `When each of the ${a.nModel} climate models says ${lvText} arrives`;
+    // The title states what the dots show; the note says how to read them.
+    if (a.nReached === 0) this.stripTitle.textContent = `No model has ${lvText} arriving here by ${this.data.lastYear}`;
+    else if (a.nReached < a.nModel) this.stripTitle.textContent = `${a.nReached} of ${a.nModel} models have ${lvText} arriving here by ${this.data.lastYear}`;
+    else if (a.earliest === a.latest) this.stripTitle.textContent = `All ${a.nModel} models say ${a.earliest}`;
+    else this.stripTitle.textContent = `The ${a.nModel} models disagree by ${a.latest - a.earliest} years`;
+    this.stripNote.textContent = `One dot per climate model, at the year it says ${lvText} arrives and stays. Bar: the median.`;
 
     this.stripBase.attr("x1", M.left).attr("x2", width - M.right).attr("y1", baseY).attr("y2", baseY);
     // Dots earlier than the axis sit at its left edge, and the first tick says so.
@@ -370,6 +407,21 @@ export class PlacePanel {
     } else {
       this.stripMedian.attr("display", "none");
       this.stripMedianText.attr("display", "none");
+    }
+    // The reader's guess, drawn in the same strip as the models' answers
+    const g = this._guessFor({ place, level, scenario, guess });
+    this.gGuess.attr("display", g ? null : "none");
+    if (g) {
+      const gx = g.year === null ? afterX : x(Math.max(g.year, X_DOMAIN[0]));
+      const flip = gx > width - M.right - 70;
+      this.gGuess.select("line").attr("x1", gx).attr("x2", gx).attr("y1", 30).attr("y2", baseY);
+      this.gGuess.select("circle").attr("cx", gx).attr("cy", 30);
+      this.gGuess
+        .select("text")
+        .attr("x", gx + (flip ? -7 : 7))
+        .attr("y", 33.5)
+        .attr("text-anchor", flip ? "end" : "start")
+        .text(g.year === null ? "your guess" : `your guess ${g.year}`);
     }
     const nAfter = a.nModel - a.nReached;
     this.afterText.attr("x", afterX).attr("y", STRIP_H - 5).text(nAfter ? "not by 2090" : "");

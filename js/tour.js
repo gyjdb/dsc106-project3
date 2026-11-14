@@ -131,6 +131,7 @@ export function createTour({ data, api, places }) {
   }
 
   startBtn.addEventListener("click", () => {
+    api.closeGuess(); // the tour needs the place panel open
     show(0);
     next.focus({ preventScroll: true });
   });

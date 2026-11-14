@@ -25,6 +25,20 @@ function check(name, ok, detail = "") {
   await page.waitForFunction(() => window.viz);
   check("page loads and exposes state", true);
 
+  // 0. Guess first: the panel keeps its answer back until the reader commits to a guess.
+  const gate = await page.evaluate(() => ({ open: !document.getElementById("guess").hidden, bodyHidden: document.getElementById("place-body").hidden, q: document.getElementById("guess-q").textContent }));
+  check("the panel asks for a guess before showing the answer", gate.open && gate.bodyHidden && /San Diego/.test(gate.q) && (await page.locator("#guess-reveal").isDisabled()), gate.q);
+  await page.locator("#guess-year").focus();
+  for (let i = 0; i < 25; i++) await page.keyboard.press("ArrowRight"); // 2045 to 2070
+  const shown = await page.locator("#guess-out").innerText();
+  await page.locator("#guess-reveal").click();
+  await page.waitForTimeout(600); // the headline number rolls from the guess to the answer
+  const sdAnswer = await page.evaluate(() => window.viz.data.placeArrival(1, 1, window.viz.state.place.cell).median);
+  const verdict = await page.locator("#guess-result").innerText();
+  const afterGuess = await page.evaluate(() => ({ gateHidden: document.getElementById("guess").hidden, hero: document.getElementById("hero-year").textContent, marker: document.querySelector("#strip-svg .guess-label").textContent, lines: document.querySelectorAll("#line-svg path.s-line").length }));
+  check("revealing compares the guess with the models", shown === "2070" && verdict.includes("You guessed 2070.") && verdict.includes(`${2070 - sdAnswer} years sooner`), verdict);
+  check("the answer and the guess marker appear after the reveal", afterGuess.gateHidden && afterGuess.hero === String(sdAnswer) && afterGuess.marker === "your guess 2070" && afterGuess.lines === 4, JSON.stringify(afterGuess));
+
   // 1. Painted colors line up with the data: the pixel at every cell center must show that
   // cell's class. Skip the far south and north, where cells get thinner than a pixel, and the
   // one column of cells that the edge of the map cuts through (its centers sit under a pixel
@@ -202,8 +216,9 @@ function check(name, ok, detail = "") {
   await page.mouse.move(lb.x + lb.width * 0.5, lb.y + lb.height * 0.5);
   const lineTip = await page.locator("#tooltip").innerText();
   check("line chart tooltip lists every series", /SSP1-2\.6/.test(lineTip) && /SSP5-8\.5/.test(lineTip) && /World average/.test(lineTip), lineTip.replace(/\n/g, " "));
+  await page.locator("#strip-svg").scrollIntoViewIfNeeded();
   const firstDot = await page.evaluate(() => {
-    const d = document.querySelector("#strip-svg circle");
+    const d = document.querySelector("#strip-svg circle.strip-dot");
     const r = d.getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   });
@@ -360,7 +375,31 @@ function check(name, ok, detail = "") {
     JSON.stringify(afterTour)
   );
 
-  // 15. Layout at phone width: nothing overflows sideways.
+  // 15. Every level and scenario, at several places: no broken text and no errors.
+  const sweep = await page.evaluate(async () => {
+    const bad = [];
+    const levels = document.querySelectorAll("#level-control input");
+    const scenarios = document.querySelectorAll("#scenario-control input");
+    const stories = document.querySelectorAll("#story-list button");
+    for (let l = 0; l < levels.length; l++) {
+      levels[l].click();
+      for (let s = 0; s < scenarios.length; s++) {
+        scenarios[s].click();
+        for (const b of stories) {
+          b.click();
+          const text = document.querySelector("main").innerText + document.querySelector(".cities").innerText + document.querySelector("h1").innerText;
+          if (/undefined|NaN|null|Infinity/.test(text)) bad.push(`level ${l} scenario ${s} ${b.textContent}`);
+        }
+      }
+    }
+    levels[1].click();
+    scenarios[1].click();
+    stories[0].click();
+    return bad;
+  });
+  check("no broken text in any of the 16 settings", sweep.length === 0, sweep.slice(0, 4).join("; "));
+
+  // 16. Layout at phone width: nothing overflows sideways.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(400);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

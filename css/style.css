@@ -255,6 +255,28 @@ legend, .search label {
 .hero-year.long { font-size: 26px; line-height: 1.05; white-space: normal; max-width: 8ch; }
 .hero-text { font-size: 13px; line-height: 1.35; color: var(--ink-2); }
 .hero-text strong { color: var(--ink); font-weight: 600; }
+/* Guess first */
+.guess { margin: 10px 0 2px; padding: 14px 14px 12px; border-radius: 10px; background: #f3f2ed; }
+.guess-q { margin: 0 0 12px; font-size: 16px; line-height: 1.35; color: var(--ink-2); text-wrap: pretty; }
+.guess-q strong { color: var(--ink); font-weight: 650; }
+.guess-slider { display: flex; align-items: center; gap: 12px; }
+.guess-slider input { flex: 1; min-width: 0; height: 28px; margin: 0; accent-color: var(--ink); cursor: ew-resize; }
+.guess-out { flex: none; min-width: 116px; font-size: 22px; line-height: 1; font-weight: 700; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+.guess-out.empty { font-size: 13px; font-weight: 400; color: var(--ink-3); }
+.guess-scale { display: flex; justify-content: space-between; margin-right: 128px; font-size: 11px; color: var(--ink-3); }
+.guess-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.guess-actions button { height: 32px; padding: 0 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
+.guess-actions button:hover { background: #f0efea; }
+.guess-actions button.primary { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 600; }
+.guess-actions button.primary:hover { background: #33322e; }
+.guess-actions button.primary:disabled { opacity: 0.35; cursor: default; }
+.guess-actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guess-hint { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+.guess-result { margin: 0 0 8px; font-size: 14px; line-height: 1.35; color: var(--ink-2); }
+.guess-result strong { color: var(--ink); font-weight: 650; }
+.guess-line { stroke: var(--ink-2); stroke-width: 1; }
+.guess-dot { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.guess-label { font-size: 11px; font-weight: 650; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 .lifetime { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 0 0 8px; padding: 7px 10px; border-radius: 8px; background: #f3f2ed; font-size: 13.5px; line-height: 1.35; color: var(--ink-2); }
 .lifetime label { color: var(--ink-2); }
 .lifetime input { width: 68px; height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); font: inherit; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }

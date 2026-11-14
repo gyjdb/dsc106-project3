@@ -129,6 +129,11 @@ export class CitySwarm {
     });
   }
 
+  /** How many cities do not arrive by the last year. */
+  neverCount() {
+    return this.nodes.filter((n) => n.year === null).length;
+  }
+
   setIsolated(bin) {
     this.isolated = bin;
     if (this.width) this._renderState();

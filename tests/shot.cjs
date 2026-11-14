@@ -7,6 +7,7 @@ const playwright = require("playwright");
   const page = await browser.newPage({ viewport: { width: +w, height: +h }, deviceScaleFactor: +scale });
   await page.goto(process.env.BASE || "http://localhost:8123/");
   await page.waitForFunction(() => window.viz);
+  if (process.env.KEEP_GUESS !== "1") await page.evaluate(() => window.viz.skipGuess());
   if (expr) await page.evaluate(expr);
   await page.waitForTimeout(500);
   await page.screenshot({ path: out, fullPage: process.env.FULL === "1" });

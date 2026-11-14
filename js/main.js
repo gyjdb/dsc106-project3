@@ -54,6 +54,7 @@ async function init() {
     place: null,
     playing: false,
     birth: null, // the reader's birth year, if they give one
+    guess: null, // the reader's guess: { cell, level, scenario, year }, year null for "not by 2090"
   };
 
   // A 2.5-degree cell is about 280 km north to south and narrows toward the poles.
@@ -264,9 +265,15 @@ async function init() {
       worldYear: data.worldArrival(state.scenario, state.level),
       year: state.year,
     });
-    citiesTitle.textContent = `When ${lv} arrives in the world’s ${N_CITIES} largest cities`;
-    citiesNote.textContent = `Each dot is a city, sized by population and placed at the year its grid cell arrives: the median of ${data.nModel} models under ${scen.code}. Cities in the same grid cell share a year. Hover a dot to find it on the map, or click to select it.`;
     swarm.update({ level: state.level, scenario: state.scenario, year: state.year, selected: state.place });
+    // The title says what the dots show for this level and scenario.
+    const [high, , tropics] = swarm.rowMedians();
+    const never = swarm.neverCount();
+    if (never === N_CITIES) citiesTitle.textContent = `None of the ${N_CITIES} largest cities reaches ${lv} by ${data.lastYear}`;
+    else if (never > N_CITIES / 2) citiesTitle.textContent = `${never} of the ${N_CITIES} largest cities do not reach ${lv} by ${data.lastYear}`;
+    else if (high !== null && tropics !== null && tropics - high >= 3) citiesTitle.textContent = `High-latitude cities reach ${lv} about ${tropics - high} years before tropical cities`;
+    else citiesTitle.textContent = `When ${lv} arrives in the world’s ${N_CITIES} largest cities`;
+    citiesNote.textContent = `The world’s ${N_CITIES} largest cities. Each dot is a city, sized by population and placed at the year its grid cell arrives: the median of ${data.nModel} models under ${scen.code}. Cities in the same grid cell share a year. Hover a dot to find it on the map, or click to select it.`;
     renderReading();
     renderPlace();
     renderTable();
@@ -274,6 +281,7 @@ async function init() {
 
   function renderPlace() {
     if (!state.place) return;
+    renderGuess();
     panel.update(state);
   }
 
@@ -319,6 +327,44 @@ async function init() {
     });
   }
   playBtn.addEventListener("click", () => (state.playing ? stopPlaying() : startPlaying()));
+
+  /* Guess first: the panel keeps its answer back until the reader commits to a guess or skips. */
+  const guessBox = document.getElementById("guess");
+  const guessQuestion = document.getElementById("guess-q");
+  const guessYear = document.getElementById("guess-year");
+  const guessOut = document.getElementById("guess-out");
+  const guessReveal = document.getElementById("guess-reveal");
+  const placeBody = document.getElementById("place-body");
+  let guessOpen = true;
+  const guessedYear = () => (+guessYear.value > data.lastYear ? null : +guessYear.value);
+  function renderGuess() {
+    if (!guessOpen) return;
+    guessQuestion.replaceChildren(
+      document.createTextNode("Before you look: when do you think "),
+      node("strong", "", state.place.name),
+      document.createTextNode(` reaches ${fmtLevel(data.meta.levels[state.level])}, under the ${SCENARIOS[state.scenario].label.toLowerCase()} emissions scenario?`)
+    );
+  }
+  function closeGuess(keep) {
+    if (!guessOpen) return;
+    guessOpen = false;
+    if (keep) {
+      state.guess = { cell: state.place.cell, level: state.level, scenario: state.scenario, year: guessedYear() };
+      // The headline number then rolls from the guess to the models' answer.
+      if (state.guess.year !== null) document.getElementById("hero-year").textContent = state.guess.year;
+    }
+    guessBox.hidden = true;
+    placeBody.hidden = false;
+    renderPlace();
+  }
+  guessYear.addEventListener("input", () => {
+    const y = guessedYear();
+    guessOut.textContent = y === null ? `Not by ${data.lastYear}` : y;
+    guessOut.classList.remove("empty");
+    guessReveal.disabled = false;
+  });
+  guessReveal.addEventListener("click", () => closeGuess(true));
+  document.getElementById("guess-skip").addEventListener("click", () => closeGuess(false));
 
   /* Birth year */
   const birthInput = document.getElementById("birth-year");
@@ -463,12 +509,14 @@ async function init() {
           startPlaying(to);
         },
         cityMedians: () => swarm.rowMedians(),
+        closeGuess: () => closeGuess(false),
       },
     });
   }
 
   // Small hook used by the automated browser checks and the demo recording.
   window.viz = {
+    skipGuess: () => closeGuess(false),
     state,
     data,
     map,

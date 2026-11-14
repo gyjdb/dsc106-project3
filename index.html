@@ -69,20 +69,37 @@
         <div class="place-name" id="place-name"></div>
         <div class="place-sub" id="place-sub"></div>
       </div>
-      <div class="hero">
-        <div class="hero-year" id="hero-year"></div>
-        <div class="hero-text" id="hero-text"></div>
+      <div class="guess" id="guess">
+        <p class="guess-q" id="guess-q"></p>
+        <div class="guess-slider">
+          <input id="guess-year" type="range" min="2000" max="2091" step="1" value="2045" aria-label="Your guess for the arrival year">
+          <output class="guess-out empty" id="guess-out" for="guess-year">Drag to guess</output>
+        </div>
+        <div class="guess-scale" aria-hidden="true"><span>2000</span><span>2090, or not by then</span></div>
+        <div class="guess-actions">
+          <button type="button" id="guess-reveal" class="primary" disabled>Reveal</button>
+          <button type="button" id="guess-skip">Skip the guess</button>
+        </div>
+        <p class="guess-hint">Not your place? Search for a city or click the map first.</p>
       </div>
-      <div class="lifetime">
-        <label for="birth-year">Born in</label>
-        <input id="birth-year" type="number" inputmode="numeric" min="1900" max="2026" step="1" value="2005" aria-describedby="lifetime-text">
-        <span class="lifetime-text" id="lifetime-text" aria-live="polite"></span>
+      <div id="place-body" hidden>
+        <div class="hero">
+          <div class="hero-year" id="hero-year"></div>
+          <div class="hero-text" id="hero-text"></div>
+        </div>
+        <p class="guess-result" id="guess-result" aria-live="polite" hidden></p>
+        <div class="lifetime">
+          <label for="birth-year">Born in</label>
+          <input id="birth-year" type="number" inputmode="numeric" min="1900" max="2026" step="1" value="2005" aria-describedby="lifetime-text">
+          <span class="lifetime-text" id="lifetime-text" aria-live="polite"></span>
+        </div>
+        <div class="chart-title" id="line-title">Warming at this place</div>
+        <p class="chart-note">Warming compared with this place’s 1850–1900 average. Lines: median of the models, smoothed over 20 years. Band: middle 80% of models for the selected scenario. Dot: median arrival year.</p>
+        <div class="chart-wrap" id="line-wrap"><svg id="line-svg" role="img" aria-label="Line chart of warming over time at the selected place for each emissions scenario."></svg></div>
+        <div class="chart-title" id="strip-title">When each climate model says it arrives</div>
+        <p class="chart-note" id="strip-note"></p>
+        <div class="chart-wrap" id="strip-wrap"><svg id="strip-svg" role="img" aria-label="Dot plot of the arrival year in each climate model."></svg></div>
       </div>
-      <div class="chart-title">Warming at this place, compared with its 1850–1900 average</div>
-      <p class="chart-note">Lines: median of the models, smoothed over 20 years. Band: middle 80% of models for the selected scenario. Dot: median arrival year.</p>
-      <div class="chart-wrap" id="line-wrap"><svg id="line-svg" role="img" aria-label="Line chart of warming over time at the selected place for each emissions scenario."></svg></div>
-      <div class="chart-title" id="strip-title">When each climate model says it arrives</div>
-      <div class="chart-wrap" id="strip-wrap"><svg id="strip-svg" role="img" aria-label="Dot plot of the arrival year in each climate model."></svg></div>
     </aside>
   </main>
 
