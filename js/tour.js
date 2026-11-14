@@ -24,8 +24,8 @@ export function createTour({ data, api, places }) {
 
   const steps = [
     {
-      title: "Land first.",
-      body: () => "Watch the timeline run to 2050. The continents fill in while most of the ocean stays gray.",
+      title: "Where does it show up first?",
+      body: () => "Watch 2000 to 2050 play out. The land fills in, while most of the ocean stays gray.",
       apply: () => {
         api.setLevel(level);
         api.setScenario(MIDDLE);
@@ -35,14 +35,14 @@ export function createTour({ data, api, places }) {
       },
     },
     {
-      title: "The Arctic is decades ahead.",
+      title: "Is everywhere warming at the same speed?",
       body: () => {
         const a = data.placeArrival(MIDDLE, level, places.arctic.cell);
         const world = data.worldArrival(MIDDLE, level);
-        const dots = "Each dot on the right is one climate model’s answer.";
-        if (a.median === null) return `Svalbard warms far faster than the world average. ${dots}`;
-        if (world === null || world <= a.median) return `Svalbard reached ${lv} in ${a.median}. ${dots}`;
-        return `Svalbard reached ${lv} in ${a.median}, ${world - a.median} years before the world average. ${dots}`;
+        const dots = "Each dot on the right is one model’s answer.";
+        if (a.median === null) return `No. Svalbard warms far faster than the world average. ${dots}`;
+        if (world === null || world <= a.median) return `No. Svalbard reached ${lv} in ${a.median}. ${dots}`;
+        return `No. Svalbard reached ${lv} in ${a.median}, ${world - a.median} years before the world average. ${dots}`;
       },
       apply: () => {
         api.setLevel(level);
@@ -53,11 +53,11 @@ export function createTour({ data, api, places }) {
       },
     },
     {
-      title: `A few places may not arrive by ${last}.`,
+      title: `Does every place get there by ${last}?`,
       body: () => {
         const a = data.placeArrival(MIDDLE, level, places.atlantic.cell);
-        if (a.nReached === a.nModel) return "South of Greenland, the ocean warms far more slowly than the land around it.";
-        return `South of Greenland, only ${a.nReached} of ${a.nModel} models reach ${lv} and stay there by ${last}. Stripes on the map mark places where the models split more evenly.`;
+        if (a.nReached === a.nModel) return "Yes, but south of Greenland the ocean warms far more slowly than the land around it.";
+        return `Not this one. South of Greenland, only ${a.nReached} of ${a.nModel} models get there. Stripes mark places where the models disagree.`;
       },
       apply: () => {
         api.setLevel(level);
@@ -68,11 +68,11 @@ export function createTour({ data, api, places }) {
       },
     },
     {
-      title: "Emissions decide how far it spreads.",
+      title: "Can we still change this?",
       body: () => {
         const low = sharesAt(LOW, last);
         const mid = sharesAt(MIDDLE, last);
-        return `Under the low scenario, ${lv} reaches ${pct(low.ocean)} of the ocean by ${last}, compared with ${pct(mid.ocean)} under the middle one.`;
+        return `Yes. With low emissions, ${lv} reaches ${pct(low.ocean)} of the ocean by ${last}, not ${pct(mid.ocean)}.`;
       },
       apply: () => {
         api.setLevel(level);
@@ -82,10 +82,10 @@ export function createTour({ data, api, places }) {
       },
     },
     {
-      title: "Northern cities go first.",
+      title: "Which cities feel it first?",
       body: () => {
         const [high, , tropics] = api.cityMedians();
-        const intro = "The 300 largest cities line up by arrival year, in rows by latitude.";
+        const intro = "Here are the 300 biggest cities.";
         if (high === null || tropics === null) return intro;
         return `${intro} High-latitude cities reach ${lv} around ${high}, tropical cities around ${tropics}.`;
       },
@@ -97,8 +97,8 @@ export function createTour({ data, api, places }) {
       },
     },
     {
-      title: "Now find your own place.",
-      body: () => "Search for a city or click anywhere on the map, and enter your birth year to see how old you would be.",
+      title: "So when does it reach you?",
+      body: () => "Search for your city or click the map. Add your birth year to see how old you’ll be.",
       apply: () => {
         api.setLevel(level);
         api.setScenario(MIDDLE);

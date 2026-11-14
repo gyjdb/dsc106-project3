@@ -160,7 +160,7 @@ async function init() {
     },
     onLeave: hideTooltip,
     onSelect: (p) => {
-      setPlace(pointPlace(p));
+      setPlace(pointPlace(p), { pulse: false }); // the reader is already looking at the spot
     },
   });
 
@@ -174,7 +174,11 @@ async function init() {
     },
   });
 
-  const panel = new PlacePanel({ data, onScenario: setScenario });
+  const panel = new PlacePanel({
+    data,
+    onScenario: setScenario,
+    onYear: jumpToYear,
+  });
 
   // Two findings that hold at every level and scenario, so they stay true as controls change.
   map.setCallouts([
@@ -219,6 +223,7 @@ async function init() {
     getBirth: () => state.birth,
     onHover: (n) => map.setLinked(n ? n.place : null),
     onSelect: (n) => setPlace(n.place),
+    onYear: jumpToYear,
   });
   const citiesTitle = document.getElementById("cities-title");
   const citiesNote = document.getElementById("cities-note");
@@ -264,7 +269,7 @@ async function init() {
     const scen = SCENARIOS[state.scenario];
     titleLevel.textContent = lv;
     document.title = `When Does ${lv} Arrive?`;
-    subtitle.textContent = `Color shows the year each place’s 20-year average temperature reaches ${lv} above its own 1850–1900 level and stays there. This is local warming, not the world average. Median of ${data.nModel} CMIP6 climate models under ${scen.code}, the “${scen.label.toLowerCase()}” emissions scenario.`;
+    subtitle.textContent = `Color shows the year each place stays ${lv} warmer than it was in 1850–1900. Median of ${data.nModel} climate models, ${scen.label.toLowerCase()} emissions (${scen.code}).`;
     map.setField(data.medianArrival(state.scenario, state.level), data.splitStripes(state.scenario, state.level));
     timeline.update({
       curves: data.areaCurves(state.scenario, state.level),
@@ -279,7 +284,7 @@ async function init() {
     else if (never > N_CITIES / 2) citiesTitle.textContent = `${never} of the ${N_CITIES} largest cities do not reach ${lv} by ${data.lastYear}`;
     else if (high !== null && tropics !== null && tropics - high >= 3) citiesTitle.textContent = `High-latitude cities reach ${lv} about ${tropics - high} years before tropical cities`;
     else citiesTitle.textContent = `When ${lv} arrives in the world’s ${N_CITIES} largest cities`;
-    citiesNote.textContent = `The world’s ${N_CITIES} largest cities. Each dot is a city, sized by population and placed at the year its grid cell arrives: the median of ${data.nModel} models under ${scen.code}. Cities in the same grid cell share a year. These are absolute degrees: tropical climates vary less from year to year, so a smaller warming stands out there sooner. Hover a dot to find it on the map, or click to select it.`;
+    citiesNote.textContent = "Each dot is a city, sized by population, at the year it arrives. Click a dot to see that city, or click between dots to jump to that year.";
     renderReading();
     renderPlace();
     renderTable();
@@ -296,12 +301,21 @@ async function init() {
     map.setYear(y);
     timeline.setYear(y);
     swarm.setYear(y);
+    panel.drawYear();
     renderReading();
   }
 
-  function setPlace(place) {
+  // A year clicked in a chart moves the timeline there, kept inside the slider's range.
+  function jumpToYear(y) {
+    const slider = document.getElementById("year-slider");
+    stopPlaying();
+    setYear(Math.max(+slider.min, Math.min(data.lastYear, y)));
+  }
+
+  function setPlace(place, { pulse = true } = {}) {
     state.place = place;
     map.setPlace(place);
+    if (pulse) map.pulse();
     swarm.setSelected(place);
     renderPlace();
     renderTable();
@@ -363,6 +377,16 @@ async function init() {
     placeBody.hidden = false;
     renderPlace();
   }
+  function openGuess() {
+    guessOpen = true;
+    state.guess = null;
+    guessYear.value = guessYear.min;
+    guessOut.textContent = "Drag to guess";
+    guessOut.classList.add("empty");
+    guessReveal.disabled = true;
+    guessBox.hidden = false;
+    placeBody.hidden = true;
+  }
   guessYear.addEventListener("input", () => {
     const y = guessedYear();
     guessOut.textContent = y === null ? `Not by ${data.lastYear}` : y;
@@ -391,39 +415,108 @@ async function init() {
     const key = `${c.n}, ${c.c}`;
     if (!seen.has(key)) seen.set(key, c);
   });
-  const datalist = document.getElementById("place-list");
-  seen.forEach((_, key) => {
-    const opt = node("option");
-    opt.value = key;
-    datalist.append(opt);
-  });
   const search = document.getElementById("place-search");
+  const suggest = document.getElementById("place-suggest");
+  const MAX_SUGGEST = 8;
   // Accents are optional when searching: "Sao Paulo" finds "São Paulo".
   const fold = (t) => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-  function searchPlace({ loose = false, report = false } = {}) {
-    const q = search.value.trim();
-    if (!q) return;
-    let c = seen.get(q);
-    if (!c && loose) {
-      const key = fold(q);
-      c = data.cities.find((d) => fold(d.n) === key) || data.cities.find((d) => fold(d.n).startsWith(key));
-    }
-    if (c) {
-      setPlace(cityPlace(c));
-    } else if (report) {
-      search.setCustomValidity(`“${q}” is not in the city list. Try a nearby city, or click the map.`);
-      search.reportValidity();
-    }
+  // Cities come largest first, so among equally good matches the bigger city leads.
+  const searchIndex = [...seen.values()].map((c) => ({ c, name: fold(c.n), country: fold(c.c) }));
+  function matchCities(q) {
+    const key = fold(q.trim());
+    if (!key) return [];
+    const rank = (d) => {
+      if (d.name.startsWith(key)) return 0;
+      if (d.name.includes(` ${key}`) || d.name.includes(`-${key}`)) return 1;
+      if (d.country.startsWith(key)) return 2;
+      if (d.name.includes(key)) return 3;
+      return -1;
+    };
+    return searchIndex
+      .map((d) => ({ ...d, rank: rank(d) }))
+      .filter((d) => d.rank >= 0)
+      .sort((p, q2) => p.rank - q2.rank)
+      .slice(0, MAX_SUGGEST)
+      .map((d) => ({ ...d, at: d.rank === 2 ? -1 : d.name.indexOf(key), len: key.length }));
   }
-  search.addEventListener("input", () => {
-    search.setCustomValidity("");
-    searchPlace();
+
+  let hits = [];
+  let active = -1;
+  function closeSuggest() {
+    suggest.hidden = true;
+    search.setAttribute("aria-expanded", "false");
+    search.removeAttribute("aria-activedescendant");
+    active = -1;
+  }
+  function setActive(i) {
+    active = i;
+    suggest.querySelectorAll("[role=option]").forEach((li, j) => li.setAttribute("aria-selected", j === i ? "true" : "false"));
+    if (i >= 0) search.setAttribute("aria-activedescendant", `place-opt-${i}`);
+    else search.removeAttribute("aria-activedescendant");
+  }
+  function renderSuggest() {
+    const q = search.value.trim();
+    hits = matchCities(q);
+    if (!q) return closeSuggest();
+    if (!hits.length) {
+      suggest.replaceChildren(node("li", "suggest-empty", `No city matches “${q}”. Try a nearby city, or click the map.`));
+    } else {
+      suggest.replaceChildren(
+        ...hits.map((h, i) => {
+          const li = node("li");
+          li.id = `place-opt-${i}`;
+          li.setAttribute("role", "option");
+          // Bold the typed part of the name, when the match is in the name.
+          const name = node("span", "suggest-name");
+          if (h.at >= 0 && h.name.length === h.c.n.length) {
+            name.append(
+              document.createTextNode(h.c.n.slice(0, h.at)),
+              node("strong", "", h.c.n.slice(h.at, h.at + h.len)),
+              document.createTextNode(h.c.n.slice(h.at + h.len))
+            );
+          } else {
+            name.textContent = h.c.n;
+          }
+          li.append(name, node("span", "suggest-sub", h.c.c));
+          // pointerdown, not click, so the box does not lose focus and close first
+          li.addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            pickCity(h.c);
+          });
+          li.addEventListener("pointerenter", () => setActive(i));
+          return li;
+        })
+      );
+    }
+    suggest.hidden = false;
+    search.setAttribute("aria-expanded", "true");
+    setActive(-1); // nothing highlighted until the arrow keys; Enter takes the top match
+  }
+  function pickCity(c) {
+    search.value = `${c.n}, ${c.c}`;
+    closeSuggest();
+    setPlace(cityPlace(c));
+  }
+  search.addEventListener("input", renderSuggest);
+  search.addEventListener("focus", () => {
+    if (search.value.trim()) renderSuggest();
   });
-  search.addEventListener("change", () => searchPlace({ loose: true }));
+  search.addEventListener("blur", closeSuggest);
   search.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
+    const open = !suggest.hidden;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
-      searchPlace({ loose: true, report: true });
+      if (!open) renderSuggest();
+      if (!hits.length) return;
+      const step = e.key === "ArrowDown" ? 1 : -1;
+      setActive((active + step + hits.length) % hits.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (!open) renderSuggest();
+      if (hits.length) pickCity(hits[Math.max(active, 0)].c);
+    } else if (e.key === "Escape" && open) {
+      e.preventDefault();
+      closeSuggest();
     }
   });
 
@@ -502,8 +595,9 @@ async function init() {
   /* Guided tour */
   const arctic = stories.find((s) => s.name === "Svalbard");
   const atlantic = stories.find((s) => s.name === "N. Atlantic");
+  let tour = null;
   if (arctic && atlantic) {
-    createTour({
+    tour = createTour({
       data,
       places: { arctic: arctic.place, atlantic: atlantic.place },
       api: {
@@ -525,6 +619,27 @@ async function init() {
       },
     });
   }
+
+  /* Reset: back to the first view, including the opening guess and the birth year. */
+  const start = { level: state.level, scenario: state.scenario };
+  document.getElementById("reset-view").addEventListener("click", () => {
+    tour?.end();
+    stopPlaying();
+    search.value = "";
+    closeSuggest();
+    openGuess();
+    birthInputs.forEach((input) => {
+      input.value = input.defaultValue;
+    });
+    state.birth = parseBirthYear(birthInputs[0].value);
+    state.level = start.level;
+    state.scenario = start.scenario;
+    checkLevel(start.level);
+    checkScenario(start.scenario);
+    setYear(data.lastYear);
+    renderField();
+    setPlace(home.place);
+  });
 
   // Small hook used by the automated browser checks and the demo recording.
   window.viz = {

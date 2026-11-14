@@ -24,8 +24,8 @@
     </fieldset>
     <div class="search">
       <label for="place-search">Find a place</label>
-      <input id="place-search" type="search" list="place-list" placeholder="Type a city" autocomplete="off">
-      <datalist id="place-list"></datalist>
+      <input id="place-search" type="search" placeholder="City or country" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="place-suggest" aria-expanded="false">
+      <ul class="suggest" id="place-suggest" role="listbox" aria-label="Matching cities" hidden></ul>
     </div>
     <div class="tryit">
       <span class="tryit-label">Or start with</span>
@@ -45,7 +45,13 @@
       </div>
       <div class="reading-row">
         <p class="reading" id="reading">Loading climate data…</p>
-        <button type="button" class="tour-start" id="tour-start" hidden>Take the tour</button>
+        <div class="view-actions">
+          <button type="button" class="reset" id="reset-view">
+            <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M3.5 8a4.5 4.5 0 1 0 1.4-3.3M4.5 1.8v3h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Reset view
+          </button>
+          <button type="button" class="tour-start" id="tour-start" hidden>Take the tour</button>
+        </div>
       </div>
       <div class="map-wrap" id="map-wrap">
         <canvas id="map-canvas" role="img" aria-label="World map colored by the year each place reaches the selected warming level. The table below the map lists the same values for major cities."></canvas>
@@ -96,7 +102,7 @@
           <div class="hero-text" id="hero-text"></div>
         </div>
         <p class="hero-range" id="hero-range" aria-live="polite"></p>
-        <p class="arrival-note">After 2070, fewer than 20 subsequent years of averages remain for the persistence check. <a href="#method-persistence">Read the arrival rule</a>.</p>
+        <p class="arrival-note">Years after 2070 are less certain. <a href="#method-persistence">Why?</a></p>
         <p class="guess-result" id="guess-result" aria-live="polite" hidden></p>
         <div class="lifetime">
           <label for="birth-year">Born in</label>

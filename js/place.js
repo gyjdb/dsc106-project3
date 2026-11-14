@@ -16,15 +16,16 @@ const fmtEnd = (v) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}°`;
 const fmtLevel = (v) => `+${v} °C`;
 
 export class PlacePanel {
-  constructor({ data, onScenario }) {
+  constructor({ data, onScenario, onYear }) {
     this.data = data;
     this.onScenario = onScenario;
+    this.onYear = onYear;
     this.nameEl = document.getElementById("place-name");
     this.subEl = document.getElementById("place-sub");
     this.heroYear = document.getElementById("hero-year");
     this.heroAround = document.getElementById("hero-around");
-    // The band holds the 10th to 90th percentile of the models: say that as a count.
-    document.getElementById("line-note").textContent = `Against this place’s 1850–1900 average. Lines: model median, smoothed over 20 years. Band: where about ${Math.round(data.nModel * 0.8)} of the ${data.nModel} models fall. Dot: median arrival.`;
+    // The band holds the 10th to 90th percentile of the models.
+    document.getElementById("line-note").textContent = "Warming since 1850–1900. Band: where most models fall. Dot: arrival.";
     this.heroText = document.getElementById("hero-text");
     this.heroRange = document.getElementById("hero-range");
     this.lifetimeText = document.getElementById("lifetime-text");
@@ -50,8 +51,9 @@ export class PlacePanel {
     this.dropLine = this.line.append("line").attr("class", "level-line");
     this.arrivalDot = this.line.append("circle").attr("class", "arrival-dot").attr("r", 5.5);
     this.gLabels = this.line.append("g");
+    this.yearLine = this.line.append("line").attr("class", "year-line").attr("display", "none");
     this.crossLine = this.line.append("line").attr("class", "cross-line").attr("display", "none");
-    this.overlay = this.line.append("rect").attr("fill", "transparent").style("cursor", "crosshair");
+    this.overlay = this.line.append("rect").attr("fill", "transparent").style("cursor", "pointer");
 
     this.strip = d3.select("#strip-svg");
     this.gStripAxis = this.strip.append("g").attr("class", "chart-axis");
@@ -63,6 +65,7 @@ export class PlacePanel {
     this.gGuess.append("line").attr("class", "guess-line");
     this.gGuess.append("circle").attr("class", "guess-dot").attr("r", 3.5);
     this.gGuess.append("text").attr("class", "guess-label");
+    this.stripYear = this.strip.append("line").attr("class", "year-line").attr("display", "none");
     this.gDots = this.strip.append("g");
     this.stripOverlay = this.strip.append("rect").attr("fill", "transparent");
 
@@ -78,6 +81,33 @@ export class PlacePanel {
     if (this.width <= 0) return; // not laid out yet; the ResizeObserver calls again
     this._lineChart(state);
     this._stripChart(state);
+    this.drawYear();
+  }
+
+  /** Follow the timeline: mark its year in both charts and fill the dots of models arrived by then. */
+  drawYear() {
+    const x = this.lx;
+    if (!x || !this.stripDots) return;
+    const { year, level } = this.state;
+    const a = this.summary;
+    const lvText = fmtLevel(this.data.meta.levels[level]);
+    // At the last year the marker would sit on the chart's edge, so the default view stays as it was.
+    const show = year < this.data.lastYear;
+    const yx = x(Math.max(year, X_DOMAIN[0]));
+    this.yearLine
+      .attr("display", show ? null : "none")
+      .attr("x1", yx)
+      .attr("x2", yx)
+      .attr("y1", M.top)
+      .attr("y2", LINE_H - M.bottom - AGE_ROW);
+    this.stripYear.attr("display", show ? null : "none").attr("x1", yx).attr("x2", yx).attr("y1", 13).attr("y2", STRIP_H - 20);
+    this.stripDots.classed("later", (d) => show && d.year !== null && d.year > year);
+    if (show) {
+      const n = a.models.filter((d) => d.year !== null && d.year <= year).length;
+      this.stripNote.textContent = `By ${year}: ${n} of ${a.nModel} models (filled dots).`;
+    } else {
+      this.stripNote.textContent = `One dot per climate model: the year it says ${lvText} arrives. Bar: the median.`;
+    }
   }
 
   /** The reader's guess, if it was made for the place, level and scenario now on show. */
@@ -113,7 +143,7 @@ export class PlacePanel {
     const world = data.worldArrival(scenario, level);
     const parts = [];
     if (a.median !== null) {
-      parts.push(["is when this place’s 20-year average reaches ", false], [fmtLevel(lv), true], [` and stays there (median of ${a.nModel} models, ${scen.code}). `, false]);
+      parts.push(["is when this place stays ", false], [fmtLevel(lv), true], [" warmer. ", false]);
       if (world !== null) {
         const gap = world - a.median;
         if (gap === 0) parts.push(["Same year as the world average.", true]);
@@ -145,13 +175,13 @@ export class PlacePanel {
     const toNodes = (list) => list.map(([t, strong]) => (strong ? node("strong", "", t) : document.createTextNode(t)));
     this.heroText.replaceChildren(...toNodes(parts));
     const spread = a.nReached === 0
-      ? `No model arrives by ${data.lastYear}.`
+      ? `No model gets there by ${data.lastYear}.`
       : a.earliest === a.latest
-        ? `Model arrivals: ${a.earliest}.`
-        : `Model arrivals: ${a.earliest} to ${a.latest}.`;
+        ? `Models say ${a.earliest}.`
+        : `Models say ${a.earliest} to ${a.latest}.`;
     this.heroRange.replaceChildren(
       node("strong", "", spread),
-      document.createTextNode(` ${a.nReached} of ${a.nModel} models arrive by ${data.lastYear}.`)
+      document.createTextNode(a.nReached > 0 && a.nReached < a.nModel ? ` Only ${a.nReached} of ${a.nModel} get there by ${data.lastYear}.` : "")
     );
     this.lifetimeText.replaceChildren(...toNodes(lifetimeParts(a.median, birth, data.lastYear, a.earliest, a.latest)));
 
@@ -351,11 +381,28 @@ export class PlacePanel {
             row.append(key, node("span", "", r.n), node("b", "", fmtTemp(r.v)));
             tip.append(row);
           });
+          tip.append(node("div", "tt-hint", "Click to show this year on the map"));
         });
       })
       .on("pointerleave", () => {
         this.crossLine.attr("display", "none");
         hideTooltip();
+      })
+      .on("click", (event) => {
+        const [mx, my] = d3.pointer(event, svg.node());
+        const i = d3.bisector((d) => d.year).center(world, x.invert(mx));
+        // A click right on a scenario's line also switches to that scenario.
+        let near = null;
+        let nearD = 6;
+        all.forEach((series, s) => {
+          const d = Math.abs(y(series[i].v) - my);
+          if (d < nearD) {
+            nearD = d;
+            near = s;
+          }
+        });
+        if (near !== null && near !== scenario) this.onScenario(near);
+        this.onYear(world[i].year);
       });
   }
 
@@ -373,7 +420,6 @@ export class PlacePanel {
     else if (a.nReached < a.nModel) this.stripTitle.textContent = `${a.nReached} of ${a.nModel} models have ${lvText} arriving here by ${this.data.lastYear}`;
     else if (a.earliest === a.latest) this.stripTitle.textContent = `All ${a.nModel} models say ${a.earliest}`;
     else this.stripTitle.textContent = `The ${a.nModel} models span ${a.latest - a.earliest} years: ${a.earliest} to ${a.latest}`;
-    this.stripNote.textContent = `One dot per climate model, at the year it says ${lvText} arrives and stays. Bar: the median.`;
 
     this.stripBase.attr("x1", M.left).attr("x2", width - M.right).attr("y1", baseY).attr("y2", baseY);
     // Dots earlier than the axis sit at its left edge, and the first tick says so.
@@ -406,14 +452,14 @@ export class PlacePanel {
     pts.forEach((p) => {
       p.y = baseY - 6 - p.row * rowH;
     });
-    const dots = this.gDots
+    const dots = (this.stripDots = this.gDots
       .selectAll("circle")
       .data(pts, (d) => d.model)
       .join("circle")
       .attr("class", (d) => `strip-dot${d.year === null ? " after" : ""}`)
       .attr("r", 4.5)
       .attr("cx", (d) => d.x)
-      .attr("cy", (d) => d.y);
+      .attr("cy", (d) => d.y));
 
     if (a.median !== null) {
       const mx = x(Math.max(a.median, X_DOMAIN[0]));
@@ -453,22 +499,37 @@ export class PlacePanel {
     svg.attr("aria-label", `Arrival year by model: ${list}.`);
 
     // The pointer only has to be closest, not on the dot.
+    const nearestDot = (mx, my) => {
+      let best = null;
+      let bestD = 18 * 18;
+      pts.forEach((p) => {
+        const d = (p.x - mx) ** 2 + (p.y - my) ** 2;
+        if (d < bestD) {
+          bestD = d;
+          best = p;
+        }
+      });
+      return best;
+    };
     this.stripOverlay
       .attr("x", 0)
       .attr("y", 0)
       .attr("width", width)
       .attr("height", STRIP_H)
+      .style("cursor", "pointer")
+      .on("click", (event) => {
+        // A dot jumps the map to that model's year; elsewhere, to the year under the pointer.
+        const [mx, my] = d3.pointer(event, svg.node());
+        const best = nearestDot(mx, my);
+        if (best) {
+          if (best.year !== null) this.onYear(best.year);
+        } else if (mx >= M.left && mx <= width - M.right) {
+          this.onYear(Math.round(x.invert(mx)));
+        }
+      })
       .on("pointermove", (event) => {
         const [mx, my] = d3.pointer(event, svg.node());
-        let best = null;
-        let bestD = 18 * 18;
-        pts.forEach((p) => {
-          const d = (p.x - mx) ** 2 + (p.y - my) ** 2;
-          if (d < bestD) {
-            bestD = d;
-            best = p;
-          }
-        });
+        const best = nearestDot(mx, my);
         dots.classed("hot", (d) => d === best);
         if (!best) {
           hideTooltip();
@@ -478,6 +539,7 @@ export class PlacePanel {
           tip.append(node("div", "tt-value", best.year === null ? "Not by 2090" : best.year), node("div", "tt-head", best.model));
           const phrase = agePhrase(best.year, this.state.birth);
           if (phrase) tip.append(node("div", "", phrase));
+          if (best.year !== null) tip.append(node("div", "tt-hint", "Click to show this year on the map"));
         });
       })
       .on("pointerleave", () => {

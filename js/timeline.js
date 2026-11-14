@@ -3,8 +3,10 @@
 import { TODAY } from "./lifetime.js";
 const d3 = window.d3;
 const THUMB = 20; // keep in sync with the thumb width in style.css
-const M = { top: 18, right: 72, bottom: 22, left: 34 };
-const H = 86;
+const H = 104; // keep in sync with the timeline and slider heights in style.css
+const BASE = 64; // bottom of the chart
+const TRACK = 94; // the slider track drawn under the year axis
+const M = { top: 18, right: 72, bottom: H - BASE, left: 34 };
 
 export class Timeline {
   constructor({ wrap, svg, slider, onInput }) {
@@ -24,6 +26,10 @@ export class Timeline {
     this.worldText = this.svg.append("text").attr("class", "tl-label");
     this.endLand = this.svg.append("text").attr("class", "tl-label");
     this.endOcean = this.svg.append("text").attr("class", "tl-label");
+    // A visible track and knob, so the chart reads as a slider at a glance.
+    this.track = this.svg.append("line").attr("class", "tl-track").attr("y1", TRACK).attr("y2", TRACK);
+    this.trackFill = this.svg.append("line").attr("class", "tl-track-fill").attr("y1", TRACK).attr("y2", TRACK);
+    this.knob = this.svg.append("circle").attr("class", "tl-knob").attr("cy", TRACK).attr("r", 8);
     this.playLine = this.svg.append("line").attr("class", "tl-play-line");
     this.playChip = this.svg.append("rect").attr("class", "tl-play-chip").attr("rx", 4).attr("height", 16).attr("width", 36);
     this.playText = this.svg.append("text").attr("class", "tl-play-year").attr("text-anchor", "middle");
@@ -44,6 +50,8 @@ export class Timeline {
     this.width = w;
     this.svg.attr("viewBox", `0 0 ${w} ${H}`);
     this.x.range([M.left, w - M.right]);
+    this.track.attr("x1", M.left).attr("x2", w - M.right);
+    this.trackFill.attr("x1", M.left);
     this.slider.style.left = `${M.left - THUMB / 2}px`;
     this.slider.style.width = `${w - M.left - M.right + THUMB}px`;
 
@@ -54,7 +62,7 @@ export class Timeline {
       .join("text")
       .attr("class", "xt")
       .attr("x", (d) => this.x(d))
-      .attr("y", H - 6)
+      .attr("y", BASE + 16)
       .attr("text-anchor", "middle")
       .text((d) => d);
     this.gAxis
@@ -181,6 +189,8 @@ export class Timeline {
     if (!this.width) return;
     const px = this.x(this.year);
     this.playLine.attr("x1", px).attr("x2", px).attr("y1", M.top).attr("y2", this.y(0));
+    this.trackFill.attr("x2", px);
+    this.knob.attr("cx", px);
     // Near the end the chip stops short of the end labels; the line still marks the year.
     const chipX = Math.min(px - 18, this.x.range()[1] + 3 - 36);
     this._avoidChip(chipX, chipX + 36);

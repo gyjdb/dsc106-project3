@@ -15,8 +15,8 @@ const BANDS = [
 ];
 
 export class CitySwarm {
-  constructor({ wrap, svg, data, cities, getBirth, onHover, onSelect }) {
-    Object.assign(this, { wrap, data, getBirth, onHover, onSelect });
+  constructor({ wrap, svg, data, cities, getBirth, onHover, onSelect, onYear }) {
+    Object.assign(this, { wrap, data, getBirth, onHover, onSelect, onYear });
     this.svg = d3.select(svg);
     this.radius = d3.scaleSqrt(d3.extent(cities, (d) => d.c.pop), [3, 11]);
     this.nodes = cities.map(({ c, place }, i) => ({
@@ -49,8 +49,13 @@ export class CitySwarm {
       .on("pointermove", (e) => this._pointer(e))
       .on("pointerleave", () => this._hover(null))
       .on("click", (e) => {
+        // A dot selects its city; the space between dots moves the timeline to that year.
         const n = this._nearest(e);
         if (n) this.onSelect?.(n);
+        else {
+          const year = this._yearAt(e);
+          if (year !== null) this.onYear?.(year);
+        }
       });
 
     // A new width changes this chart's height too. Doing that on the next frame, not inside
@@ -296,10 +301,23 @@ export class CitySwarm {
     return (n.tx - px) ** 2 + (n.ty - py) ** 2 <= reach * reach ? n : null;
   }
 
+  /** The year under the pointer, or null outside the plot area. */
+  _yearAt(event) {
+    const [px, py] = d3.pointer(event, this.svg.node());
+    const [x0, x1] = this.x.range();
+    if (px < x0 || px > x1 || py < this.m.top || py > this.height - this.m.bottom) return null;
+    return Math.round(this.x.invert(px));
+  }
+
   _pointer(event) {
     const n = this._nearest(event);
     this._hover(n);
-    if (!n) return;
+    if (!n) {
+      const year = this._yearAt(event);
+      if (year === null) hideTooltip();
+      else showTooltip(event, (tip) => tip.append(node("div", "tt-value", year), node("div", "tt-hint", "Click to show this year on the map")));
+      return;
+    }
     const a = this.data.placeArrival(this.scenario, this.level, n.place.cell);
     showTooltip(event, (tip) => {
       tip.append(

@@ -17,6 +17,7 @@ const DIMMED = "#f6f5f2";
 const ISOLATED_NEUTRAL = "#a9a89f";
 const NO_STRIPE = 254; // same value as ClimateData.NO_STRIPE
 const ROTATE = 11; // map center longitude: keeps Russia and Alaska in one piece
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 export function binOf(year) {
   if (year === null) return BINS.length - 1;
@@ -45,6 +46,7 @@ export class ArrivalMap {
     this.coast = this.gCoast.append("path").attr("class", "coast");
     this.sphere = this.gCoast.append("path").attr("class", "sphere");
     this.gCallouts = this.svg.append("g");
+    this.gPulse = this.svg.append("g").attr("pointer-events", "none");
     this.hoverCell = this.svg.append("path").attr("class", "hover-cell").attr("display", "none");
     this.linkRing = this.svg.append("g").attr("display", "none").attr("pointer-events", "none");
     this.linkRing.append("circle").attr("class", "marker-ring").attr("r", 9);
@@ -218,6 +220,32 @@ export class ArrivalMap {
       .text(this.place.name)
       .attr("x", right ? 11 : -11)
       .attr("text-anchor", right ? "start" : "end");
+  }
+
+  /** Send rings out from the marker, so a place picked outside the map is easy to spot on it. */
+  pulse() {
+    this.gPulse.selectAll("circle").interrupt().remove();
+    if (!this.place || !this.width || REDUCED_MOTION.matches) return;
+    const [x, y] = this.projection([this.place.lon, this.place.lat]);
+    this.gPulse
+      .selectAll("circle")
+      .data([0, 1, 2])
+      .join("circle")
+      .attr("class", "pulse-ring")
+      .attr("cx", x)
+      .attr("cy", y)
+      .attr("r", 7)
+      .attr("opacity", 0)
+      .transition()
+      .delay((i) => i * 350)
+      .duration(0)
+      .attr("opacity", 1)
+      .transition()
+      .duration(900)
+      .ease(d3.easeCubicOut)
+      .attr("r", 36)
+      .attr("opacity", 0)
+      .remove();
   }
 
   /** Ring a place that is being pointed at in another chart, or pass null to clear it. */
