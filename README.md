@@ -8,6 +8,17 @@ level and stays there, built from CMIP6 climate model simulations.
 Final version for the 11/13 submission, by The Avengineers: Ethan Cai, Mayur Nookala and
 Matthew Ramos.
 
+## What is on the page
+
+- **A guess first.** The page asks when you think the warming level reaches your place, then
+  shows the models' answer next to your guess.
+- **A world map of arrival years**, one block per 2.5° grid cell, with a timeline that plays
+  the arrivals forward and charts the share of land and ocean reached.
+- **A panel for any place**: the median arrival year, your age in that year, what the
+  emissions scenario changes, the warming curves, and one dot for each climate model.
+- **A dot plot of the 300 largest cities**, in rows by latitude, linked to the map.
+- **A six-step tour** of the main findings, and a table of the cities.
+
 ## Run the page
 
 The page loads data with `fetch`, so serve it over http:

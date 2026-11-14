@@ -6,7 +6,7 @@ const d3 = window.d3;
 
 const X_DOMAIN = [1960, 2090];
 const AGE_ROW = 13; // a second row of axis labels: the reader's age in those years
-const LINE_H = 236;
+const LINE_H = 226;
 const MOVE_MS = 350; // how long lines and numbers take to move to a new state
 const STRIP_H = 98;
 const M = { top: 12, right: 100, bottom: 20, left: 32 };
