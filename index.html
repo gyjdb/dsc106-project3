@@ -95,6 +95,8 @@
           </div>
           <div class="hero-text" id="hero-text"></div>
         </div>
+        <p class="hero-range" id="hero-range" aria-live="polite"></p>
+        <p class="arrival-note">After 2070, fewer than 20 subsequent years of averages remain for the persistence check. <a href="#method-persistence">Read the arrival rule</a>.</p>
         <p class="guess-result" id="guess-result" aria-live="polite" hidden></p>
         <div class="lifetime">
           <label for="birth-year">Born in</label>
@@ -132,6 +134,7 @@
 
   <section class="method" id="method">
     <h2>Data and method</h2>
+    <p class="writeup-link"><a href="https://github.com/gyjdb/dsc106-project3/blob/main/writeup.md">Read the design rationale and development write-up</a>.</p>
     <div class="method-grid">
       <div>
         <h3>Source</h3>
@@ -141,9 +144,9 @@
         <h3>Which models</h3>
         <p>In the archive, 38 models provide all five experiments, and 25 of them have a transient climate response inside the IPCC AR6 likely range of 1.4–2.2 °C (Hausfather et al., 2022). We use <span class="n-models"></span> of those 25, with no two from the same CMIP6 institution ID. The screen leaves out the “hot models” that warm faster than the evidence supports. Models used: <span id="method-models"></span>.</p>
       </div>
-      <div>
+      <div id="method-persistence">
         <h3>Transformations</h3>
-        <p>Each model is regridded to a shared 2.5° grid with area weighting and averaged by year. Warming is measured per grid cell against that model’s own 1850–1900 mean, then smoothed with a 20-year running mean. A place “arrives” in the first year after the baseline that this average reaches the level and stays there for at least 20 more years, or to the end of the data, so a short warm spell does not count. The year shown is the middle of that first 20-year period.</p>
+        <p>Each model is regridded to a shared 2.5° grid with area weighting and averaged by year. Warming is measured per grid cell against that model’s own 1850–1900 mean, then smoothed with a 20-year running mean. A place “arrives” in the first year after the baseline that this average reaches the level and remains at or above it for the following 20 years, or through the final available average if sooner. The averages end in 2090 (the 2080–2099 window), so arrivals after 2070 have a shorter persistence check; an arrival in 2090 has no subsequent averages to check. The year shown is the middle of the first qualifying 20-year period.</p>
       </div>
       <div>
         <h3>Reading it carefully</h3>
